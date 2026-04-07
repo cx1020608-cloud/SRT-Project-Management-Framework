@@ -91,7 +91,6 @@ function renderView(){
         case'funnel':c.innerHTML=vFunnel();break;
         case'channelroi':c.innerHTML=vChannelROI();break;
         case'pmfit':c.innerHTML=vPMFit();break;
-        case'matrix':c.innerHTML=vMatrix();break;
         case'decisions':c.innerHTML=vDecisions();break;
         case'news':c.innerHTML=vNews();break;
         case'weekly':c.innerHTML=vWeekly();break;
