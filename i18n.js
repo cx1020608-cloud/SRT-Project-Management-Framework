@@ -220,6 +220,23 @@ const I18N = {
     upload_kpi_updated: '更新',
     upload_kpi_changes: '字段变更',
     upload_kpi_unchanged: '无变化',
+
+    // Changelog / Update Log
+    cl_title: '数据更新日志',
+    cl_date: '更新日期',
+    cl_source: '数据来源',
+    cl_stats_new: '新增案件',
+    cl_stats_updated: '更新案件',
+    cl_stats_total: '当前总数',
+    cl_stats_prev: '更新前总数',
+    cl_progress_title: '案件进度变更',
+    cl_new_title: '新增案件一览',
+    cl_key_title: '重要字段变更',
+    cl_field_summary: '变更字段统计',
+    cl_summary_title: '更新内容总结',
+    cl_from: '从',
+    cl_to: '至',
+    cl_count: '次',
   },
   ja: {
     nav_main: 'メイン',
@@ -431,6 +448,23 @@ const I18N = {
     upload_kpi_updated: '更新',
     upload_kpi_changes: 'フィールド変更',
     upload_kpi_unchanged: '変更なし',
+
+    // Changelog / Update Log
+    cl_title: 'データ更新ログ',
+    cl_date: '更新日',
+    cl_source: 'データソース',
+    cl_stats_new: '新規案件',
+    cl_stats_updated: '更新案件',
+    cl_stats_total: '現在の合計',
+    cl_stats_prev: '更新前合計',
+    cl_progress_title: '案件ステータス変更',
+    cl_new_title: '新規案件一覧',
+    cl_key_title: '重要フィールド変更',
+    cl_field_summary: '変更フィールド集計',
+    cl_summary_title: '更新内容まとめ',
+    cl_from: 'から',
+    cl_to: 'へ',
+    cl_count: '件',
   }
 };
 

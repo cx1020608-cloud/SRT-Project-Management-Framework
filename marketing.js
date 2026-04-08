@@ -1238,5 +1238,94 @@ function vWeekly(){
             </div>
         </div>
 
-    </div></div>`;
+    </div></div>
+
+    <!-- Update Log Section -->
+    ${typeof CHANGELOG!=='undefined'?buildChangelogSection(l):''}
+
+    `;
+}
+
+// ── Changelog Section Builder ──
+function buildChangelogSection(l){
+    const cl=CHANGELOG;
+    if(!cl)return'';
+    const s=cl.stats;
+    const FL={year:'年度',quarter:'四半期',crmNo:'CRM No',pjtNo:'PJT No',endUser:'End User',projectName:'案件名',country:'国',region:'地域',channel:'チャネル',channelContact:'窓口',sales:'営業',salesEngineer:'SE',scenario:'シナリオ',customization:'カスタマイズ',progress:'進捗',remarks:'備考',orderDate:'受注日',presalesDoc:'資料',hardware1:'ハード1',qty1:'数量1',hardware2:'ハード2',qty2:'数量2',software:'ソフト',softQty:'ソフト数',lossReason:'失注理由',channelDelivery:'到貨',projectStatus:'状態',installation:'据付',remark:'REMARK'};
+
+    let html=`<div class="card" style="grid-column:1/-1">
+        <div class="card-title">${t('cl_title')} <span style="font-size:11px;color:#6b7280;font-weight:400;margin-left:8px">${cl.date} | ${cl.source}</span></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+            <div style="text-align:center;padding:14px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0"><div style="font-size:28px;font-weight:800;color:#16a34a">${s.total_new}</div><div style="font-size:11px;color:#15803d">${t('cl_stats_new')}</div></div>
+            <div style="text-align:center;padding:14px;background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe"><div style="font-size:28px;font-weight:800;color:#2563eb">${s.total_updated}</div><div style="font-size:11px;color:#1d4ed8">${t('cl_stats_updated')}</div></div>
+            <div style="text-align:center;padding:14px;background:#faf5ff;border-radius:10px;border:1px solid #e9d5ff"><div style="font-size:28px;font-weight:800;color:#7c3aed">${s.total_records}</div><div style="font-size:11px;color:#6d28d9">${t('cl_stats_total')}</div></div>
+            <div style="text-align:center;padding:14px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb"><div style="font-size:28px;font-weight:800;color:#6b7280">${s.prev_records}</div><div style="font-size:11px;color:#6b7280">${t('cl_stats_prev')}</div></div>
+        </div>`;
+
+    // Summary + Field stats
+    const progMap={};
+    cl.progress_changes.forEach(p=>{const k=(p.from||'?')+' → '+(p.to||'?');progMap[k]=(progMap[k]||0)+1;});
+
+    html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">`;
+    // Left: Summary
+    html+=`<div style="background:linear-gradient(135deg,#eff6ff,#f0f9ff);border:1px solid #bfdbfe;border-radius:10px;padding:16px">
+        <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:10px">${t('cl_summary_title')}</div>
+        <ul style="margin:0;padding:0 0 0 16px;font-size:12px;line-height:2;color:#1e3a5f">
+            <li>${l('新增 '+s.total_new+' 条案件，更新 '+s.total_updated+' 条案件','新規 '+s.total_new+' 件、更新 '+s.total_updated+' 件')}</li>
+            <li>${l('案件总数从 '+s.prev_records+' 增至 '+s.total_records,'案件総数 '+s.prev_records+' → '+s.total_records)}</li>
+            <li>${l('进度变更 '+cl.progress_changes.length+' 项','ステータス変更 '+cl.progress_changes.length+' 件')}</li>`;
+    Object.entries(progMap).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>{html+=`<li style="font-size:11px;color:#475569">${k} × ${v}</li>`;});
+    html+=`</ul></div>`;
+    // Right: Field summary
+    html+=`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:16px">
+        <div style="font-size:13px;font-weight:700;color:#6d28d9;margin-bottom:10px">${t('cl_field_summary')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    Object.entries(cl.field_summary).slice(0,15).forEach(([f,n])=>{
+        html+=`<span style="display:inline-block;padding:4px 10px;background:#f3e8ff;border-radius:6px;font-size:11px;color:#7c3aed;font-weight:600">${FL[f]||f} <span style="color:#a855f7">${n}</span></span>`;
+    });
+    html+=`</div></div></div>`;
+
+    // Progress changes
+    if(cl.progress_changes.length){
+        html+=`<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:8px">${t('cl_progress_title')} <span style="font-size:11px;font-weight:400;color:#6b7280">(${cl.progress_changes.length})</span></div>`;
+        html+=`<div style="max-height:260px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px"><table class="mk-tbl" style="margin:0"><thead><tr><th>ID</th><th>${l('案件名','案件名')}</th><th>${t('cl_from')}</th><th></th><th>${t('cl_to')}</th></tr></thead><tbody>`;
+        cl.progress_changes.forEach(p=>{
+            const tc=p.to&&p.to.includes('移交')?'#10b981':p.to&&p.to.includes('签订')?'#3b82f6':p.to&&p.to.includes('取消')?'#ef4444':p.to&&p.to.includes('暂停')?'#f59e0b':'#6b7280';
+            html+=`<tr><td>${p.id}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</td><td style="font-size:11px;color:#6b7280">${esc(p.from||'—')}</td><td style="color:#9ca3af">→</td><td style="color:${tc};font-weight:600;font-size:11px">${esc(p.to||'—')}</td></tr>`;
+        });
+        html+=`</tbody></table></div></div>`;
+    }
+
+    // New records grouped by channel
+    if(cl.new_records.length){
+        html+=`<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:8px">${t('cl_new_title')} <span style="background:#10b981;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px">${cl.new_records.length}</span></div>`;
+        const byCh={};
+        cl.new_records.forEach(r=>{const c=r.channel||'Other';if(!byCh[c])byCh[c]=[];byCh[c].push(r);});
+        html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px">`;
+        Object.entries(byCh).sort((a,b)=>b[1].length-a[1].length).forEach(([ch,recs])=>{
+            html+=`<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px">
+                <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">${esc(ch)} <span style="color:#10b981">(${recs.length})</span></div>`;
+            recs.forEach(r=>{
+                const pc=r.progress&&r.progress.includes('移交')?'#10b981':r.progress&&r.progress.includes('签订')?'#3b82f6':'#6b7280';
+                html+=`<div style="font-size:11px;color:#374151;padding:2px 0;display:flex;justify-content:space-between;gap:6px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">#${r.id} ${esc(r.name)}</span><span style="color:${pc};white-space:nowrap;font-weight:600">${esc((r.progress||'').replace(/^\d+-/,''))}</span></div>`;
+            });
+            html+=`</div>`;
+        });
+        html+=`</div></div>`;
+    }
+
+    // Key field changes
+    if(cl.key_updates.length){
+        html+=`<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:8px">${t('cl_key_title')} <span style="background:#3b82f6;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px">${cl.key_updates.length}</span></div>`;
+        html+=`<div style="max-height:350px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px"><table class="mk-tbl" style="margin:0"><thead><tr><th>ID</th><th>${l('案件','案件')}</th><th>${l('字段','フィールド')}</th><th>${t('cl_from')}</th><th></th><th>${t('cl_to')}</th></tr></thead><tbody>`;
+        cl.key_updates.forEach(u=>{
+            u.changes.forEach((c,i)=>{
+                html+=`<tr>${i===0?`<td rowspan="${u.changes.length}">${u.id}</td><td rowspan="${u.changes.length}" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.name)}</td>`:''}<td style="font-weight:600;font-size:11px">${FL[c.f]||c.f}</td><td style="font-size:11px;color:#ef4444;text-decoration:line-through">${esc(c.o||'—')}</td><td style="color:#9ca3af">→</td><td style="font-size:11px;color:#10b981;font-weight:600">${esc(c.n||'—')}</td></tr>`;
+            });
+        });
+        html+=`</tbody></table></div></div>`;
+    }
+
+    html+=`</div>`;
+    return html;
 }
