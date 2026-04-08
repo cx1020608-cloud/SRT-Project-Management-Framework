@@ -208,6 +208,307 @@ fetch('data.json').then(r=>r.json()).then(d=>{
 });
 
 // ============================================================
+// FILE UPLOAD & DIFF ENGINE
+// ============================================================
+(function initUpload(){
+    const uploadBtn=document.getElementById('uploadBtn');
+    const fileInput=document.getElementById('fileInput');
+    const diffOverlay=document.getElementById('diffOverlay');
+    const diffModal=document.getElementById('diffModal');
+    const diffBody=document.getElementById('diffBody');
+    const diffApply=document.getElementById('diffApply');
+    const diffCancel=document.getElementById('diffCancel');
+    const diffClose=document.getElementById('diffClose');
+    if(!uploadBtn)return;
+
+    // Column header → field name mapping (supports Chinese/Japanese/English)
+    const COL_MAP={
+        'id':'id','ID':'id',
+        'year':'year','年':'year','年度':'year',
+        'quarter':'quarter','四半期':'quarter','季度':'quarter',
+        'crmNo':'crmNo','CRM No':'crmNo','CRM':'crmNo','crm':'crmNo','CRM番号':'crmNo',
+        'pjtNo':'pjtNo','PJT No':'pjtNo','项目编号':'pjtNo','案件番号':'pjtNo',
+        'endUser':'endUser','End User':'endUser','客户':'endUser','エンドユーザー':'endUser','顾客':'endUser',
+        'projectName':'projectName','Project Name':'projectName','项目名':'projectName','案件名':'projectName','项目名称':'projectName',
+        'country':'country','Country':'country','国家':'country','国':'country',
+        'region':'region','Region':'region','地区':'region','地域':'region',
+        'channel':'channel','Channel':'channel','渠道':'channel','チャネル':'channel','代理商':'channel',
+        'channelContact':'channelContact','Channel Contact':'channelContact','渠道联系人':'channelContact','チャネル担当':'channelContact',
+        'sales':'sales','Sales':'sales','销售':'sales','営業':'sales','营业':'sales',
+        'salesEngineer':'salesEngineer','Sales Engineer':'salesEngineer','SE':'salesEngineer','售前':'salesEngineer','プリセールス':'salesEngineer',
+        'scenario':'scenario','Scenario':'scenario','场景':'scenario','シナリオ':'scenario',
+        'customization':'customization','Customization':'customization','定制':'customization','カスタマイズ':'customization',
+        'progress':'progress','Progress':'progress','进度':'progress','ステータス':'progress','进展':'progress','状态':'progress',
+        'remarks':'remarks','Remarks':'remarks','备注':'remarks','備考':'remarks','跟进':'remarks',
+        'orderDate':'orderDate','Order Date':'orderDate','订单日期':'orderDate','受注日':'orderDate',
+        'quotation':'quotation','Quotation':'quotation','报价':'quotation','見積':'quotation',
+        'deliveryDate':'deliveryDate','Delivery Date':'deliveryDate','交付日期':'deliveryDate','納品日':'deliveryDate',
+        'presalesDoc':'presalesDoc','Presales Doc':'presalesDoc','售前文档':'presalesDoc','資料':'presalesDoc',
+        'hardware1':'hardware1','Hardware1':'hardware1','硬件1':'hardware1','ハードウェア1':'hardware1','Hardware 1':'hardware1',
+        'qty1':'qty1','Qty1':'qty1','数量1':'qty1','Qty 1':'qty1',
+        'hardware2':'hardware2','Hardware2':'hardware2','硬件2':'hardware2','ハードウェア2':'hardware2','Hardware 2':'hardware2',
+        'qty2':'qty2','Qty2':'qty2','数量2':'qty2','Qty 2':'qty2',
+        'software':'software','Software':'software','软件':'software','ソフトウェア':'software',
+        'softQty':'softQty','Soft Qty':'softQty','软件数量':'softQty',
+        'lossReason':'lossReason','Loss Reason':'lossReason','丢单原因':'lossReason','失注理由':'lossReason',
+        'channelDelivery':'channelDelivery','Channel Delivery':'channelDelivery',
+        'projectStatus':'projectStatus','Project Status':'projectStatus','项目状态':'projectStatus','案件状況':'projectStatus',
+        'acceptProb':'acceptProb','Accept Prob':'acceptProb','成功率':'acceptProb','受注確率':'acceptProb','概率':'acceptProb',
+        'installation':'installation','Installation':'installation','安装':'installation','設置':'installation','导入':'installation',
+        'remark':'remark','Remark':'remark','附加说明':'remark','追加備考':'remark'
+    };
+
+    // Human-readable field labels
+    const FIELD_LABEL={
+        id:'ID',year:'Year',quarter:'Quarter',crmNo:'CRM No',pjtNo:'PJT No',
+        endUser:'End User',projectName:'Project Name',country:'Country',region:'Region',
+        channel:'Channel',channelContact:'Channel Contact',sales:'Sales',salesEngineer:'SE',
+        scenario:'Scenario',customization:'Customization',progress:'Progress',remarks:'Remarks',
+        orderDate:'Order Date',quotation:'Quotation',deliveryDate:'Delivery Date',
+        presalesDoc:'Presales Doc',hardware1:'Hardware1',qty1:'Qty1',hardware2:'Hardware2',
+        qty2:'Qty2',software:'Software',softQty:'Soft Qty',lossReason:'Loss Reason',
+        channelDelivery:'Channel Delivery',projectStatus:'Project Status',
+        acceptProb:'Accept Prob',installation:'Installation',remark:'Remark'
+    };
+
+    let pendingDiff=null; // store diff result for apply
+
+    uploadBtn.addEventListener('click',()=>fileInput.click());
+    fileInput.addEventListener('change',handleFile);
+
+    function handleFile(e){
+        const file=e.target.files[0];
+        if(!file)return;
+        const reader=new FileReader();
+        reader.onload=function(ev){
+            try{
+                const wb=XLSX.read(ev.target.result,{type:'array',cellDates:true});
+                const ws=wb.Sheets[wb.SheetNames[0]];
+                const rows=XLSX.utils.sheet_to_json(ws);
+                const {records:mapped}=mapColumns(rows);
+                if(!mapped.length){alert(t('upload_parse_error'));return;}
+                const diff=computeDiff(mapped);
+                pendingDiff=diff;
+                showDiffModal(diff);
+            }catch(err){
+                console.error(err);
+                alert(t('upload_parse_error')+'\n'+err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        fileInput.value=''; // reset
+    }
+
+    function mapColumns(rows){
+        if(!rows.length)return{records:[],fields:new Set()};
+        // Collect all mapped field names present in the file
+        const fields=new Set();
+        const records=rows.map(row=>{
+            const obj={};
+            Object.keys(row).forEach(col=>{
+                const key=COL_MAP[col.trim()];
+                if(key){
+                    let v=row[col];
+                    if(v instanceof Date)v=formatDate(v);
+                    if(typeof v==='number'&&(key==='year'||key==='quarter'||key==='id'))v=Math.round(v);
+                    obj[key]=v;
+                    fields.add(key);
+                }
+            });
+            return obj;
+        }).filter(o=>o.id||o.crmNo||o.pjtNo);
+        return{records,fields};
+    }
+
+    function formatDate(d){
+        const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+        return `${y}-${m}-${day} 00:00:00`;
+    }
+
+    function normalize(v){
+        if(v===null||v===undefined||v==='')return '';
+        if(typeof v==='number')return String(v);
+        return String(v).trim();
+    }
+
+    function computeDiff(newRows){
+        const result={newRecords:[],updatedRecords:[],unchangedCount:0,totalChanges:0};
+        const existingById={},existingByCrm={},existingByPjt={};
+        RAW.forEach((r,i)=>{
+            if(r.id)existingById[r.id]=i;
+            if(r.crmNo)existingByCrm[r.crmNo]=i;
+            if(r.pjtNo)existingByPjt[r.pjtNo]=i;
+        });
+        newRows.forEach(nr=>{
+            let idx=-1;
+            if(nr.id&&existingById[nr.id]!==undefined)idx=existingById[nr.id];
+            else if(nr.crmNo&&existingByCrm[nr.crmNo]!==undefined)idx=existingByCrm[nr.crmNo];
+            else if(nr.pjtNo&&existingByPjt[nr.pjtNo]!==undefined)idx=existingByPjt[nr.pjtNo];
+
+            if(idx===-1){
+                const rec={...nr};
+                if(!rec.id)rec.id=RAW.length?Math.max(...RAW.map(r=>r.id||0))+result.newRecords.length+1:1;
+                result.newRecords.push(rec);
+            }else{
+                const old=RAW[idx];
+                const changes=[];
+                // Only compare fields present in THIS row (not global column set)
+                Object.keys(nr).forEach(k=>{
+                    if(k==='id')return;
+                    const ov=normalize(old[k]);
+                    const nv=normalize(nr[k]);
+                    if(ov!==nv){
+                        changes.push({field:k,oldVal:old[k],newVal:nr[k]});
+                    }
+                });
+                if(changes.length){
+                    result.updatedRecords.push({idx,ident:old.crmNo||old.pjtNo||'#'+old.id,name:old.projectName||old.endUser||'',changes});
+                    result.totalChanges+=changes.length;
+                }else{
+                    result.unchangedCount++;
+                }
+            }
+        });
+        return result;
+    }
+
+    function showDiffModal(diff){
+        document.getElementById('diffTitle').textContent=t('upload_title');
+        diffApply.textContent=t('upload_apply');
+        diffCancel.textContent=t('upload_cancel');
+
+        const nNew=diff.newRecords.length;
+        const nUpd=diff.updatedRecords.length;
+        const nChg=diff.totalChanges;
+        const nUnch=diff.unchangedCount;
+
+        if(!nNew&&!nUpd){
+            diffBody.innerHTML=`<div style="text-align:center;padding:40px;color:#6b7280"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><p style="font-size:14px;font-weight:600">${t('upload_no_change')}</p></div>`;
+            diffApply.style.display='none';
+        }else{
+            diffApply.style.display='';
+            let html=`<div class="diff-kpis">
+                <div class="diff-kpi dk-new"><div class="dk-num">${nNew}</div><div class="dk-label">${t('upload_kpi_new')}</div></div>
+                <div class="diff-kpi dk-updated"><div class="dk-num">${nUpd}</div><div class="dk-label">${t('upload_kpi_updated')}</div></div>
+                <div class="diff-kpi dk-changes"><div class="dk-num">${nChg}</div><div class="dk-label">${t('upload_kpi_changes')}</div></div>
+                <div class="diff-kpi dk-unchanged"><div class="dk-num">${nUnch}</div><div class="dk-label">${t('upload_kpi_unchanged')}</div></div>
+            </div>`;
+
+            // New records section
+            if(nNew){
+                html+=`<div class="diff-section"><div class="diff-section-title"><span class="badge badge-new">${nNew}</span> ${t('upload_new_records')}</div>`;
+                html+=`<table class="diff-tbl"><thead><tr><th>ID</th><th>CRM / PJT</th><th>End User</th><th>Project</th><th>Progress</th><th>Channel</th></tr></thead><tbody>`;
+                diff.newRecords.forEach(r=>{
+                    html+=`<tr><td>${esc(r.id||'—')}</td><td>${esc(r.crmNo||r.pjtNo||'—')}</td><td>${esc(r.endUser||'—')}</td><td>${esc(r.projectName||'—')}</td><td>${esc(r.progress||'—')}</td><td>${esc(r.channel||'—')}</td></tr>`;
+                });
+                html+=`</tbody></table></div>`;
+            }
+
+            // Updated records section
+            if(nUpd){
+                html+=`<div class="diff-section"><div class="diff-section-title"><span class="badge badge-update">${nUpd}</span> ${t('upload_updated_records')}</div>`;
+                diff.updatedRecords.forEach(rec=>{
+                    html+=`<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:4px">${esc(rec.ident)} — ${esc(rec.name)}</div>`;
+                    html+=`<table class="diff-tbl"><thead><tr><th>${t('upload_field')}</th><th>${t('upload_old_val')}</th><th></th><th>${t('upload_new_val')}</th></tr></thead><tbody>`;
+                    rec.changes.forEach(c=>{
+                        const label=FIELD_LABEL[c.field]||c.field;
+                        const ov=c.oldVal===null||c.oldVal===undefined?'—':String(c.oldVal);
+                        const nv=c.newVal===null||c.newVal===undefined?'—':String(c.newVal);
+                        html+=`<tr><td style="font-weight:600">${esc(label)}</td><td><span class="diff-old">${esc(ov)}</span></td><td class="diff-arrow">→</td><td><span class="diff-new">${esc(nv)}</span></td></tr>`;
+                    });
+                    html+=`</tbody></table></div>`;
+                });
+                html+=`</div>`;
+            }
+
+            // Auto-generated summary
+            html+=buildSummary(diff);
+            diffBody.innerHTML=html;
+        }
+
+        diffOverlay.classList.add('active');
+        diffModal.classList.add('active');
+    }
+
+    function buildSummary(diff){
+        const items=[];
+        if(diff.newRecords.length){
+            const scenarios=[...new Set(diff.newRecords.map(r=>r.scenario).filter(Boolean))];
+            const channels=[...new Set(diff.newRecords.map(r=>r.channel).filter(Boolean))];
+            items.push(`${t('upload_new_records')}: ${diff.newRecords.length} — ${scenarios.length?scenarios.join(', '):''}${channels.length?' ('+channels.join(', ')+')':''}`);
+        }
+        if(diff.updatedRecords.length){
+            // Group changes by field
+            const fieldCounts={};
+            diff.updatedRecords.forEach(r=>r.changes.forEach(c=>{
+                fieldCounts[c.field]=(fieldCounts[c.field]||0)+1;
+            }));
+            const top=Object.entries(fieldCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            top.forEach(([f,n])=>{
+                items.push(`${FIELD_LABEL[f]||f}: ${n} ${t('upload_fields_changed')}`);
+            });
+            // Progress changes
+            const progressChanges=diff.updatedRecords.filter(r=>r.changes.some(c=>c.field==='progress'));
+            if(progressChanges.length){
+                items.push(`Pipeline: ${progressChanges.length} ${LANG==='ja'?'件のステータス変更':'个进度变更'}`);
+            }
+            // Remarks updates
+            const remarkChanges=diff.updatedRecords.filter(r=>r.changes.some(c=>c.field==='remarks'||c.field==='remark'));
+            if(remarkChanges.length){
+                items.push(`${LANG==='ja'?'跟進/備考':'跟进/备注'}: ${remarkChanges.length} ${LANG==='ja'?'件更新':'个更新'}`);
+            }
+        }
+        if(!items.length)return'';
+        return `<div class="diff-summary"><h4>${t('upload_summary')}</h4><ul>${items.map(i=>'<li>'+i+'</li>').join('')}</ul></div>`;
+    }
+
+    function closeModal(){
+        diffOverlay.classList.remove('active');
+        diffModal.classList.remove('active');
+        pendingDiff=null;
+    }
+
+    diffOverlay.addEventListener('click',closeModal);
+    diffClose.addEventListener('click',closeModal);
+    diffCancel.addEventListener('click',closeModal);
+
+    diffApply.addEventListener('click',function(){
+        if(!pendingDiff)return;
+        const diff=pendingDiff;
+        // Apply updates
+        diff.updatedRecords.forEach(rec=>{
+            const old=RAW[rec.idx];
+            rec.changes.forEach(c=>{old[c.field]=c.newVal;});
+        });
+        // Add new records
+        diff.newRecords.forEach(nr=>{
+            // Fill missing fields with null
+            const full={id:null,year:null,quarter:null,crmNo:null,endUser:null,projectName:null,
+                country:null,region:null,channel:null,channelContact:null,sales:null,salesEngineer:null,
+                scenario:null,customization:null,progress:null,remarks:null,orderDate:null,quotation:null,
+                deliveryDate:null,presalesDoc:null,hardware1:null,qty1:null,hardware2:null,qty2:null,
+                software:null,softQty:null,lossReason:null,channelDelivery:null,pjtNo:null,
+                projectStatus:null,acceptProb:null,installation:null,remark:null,...nr};
+            RAW.push(full);
+        });
+        // Refresh
+        applyGF();renderView();
+        document.getElementById('updateTime').textContent=new Date().toLocaleDateString();
+        closeModal();
+        // Toast notification
+        showToast(t('upload_applied')+` — ${diff.newRecords.length} ${t('upload_kpi_new')}, ${diff.updatedRecords.length} ${t('upload_kpi_updated')}`);
+    });
+
+    function showToast(msg){
+        const toast=document.createElement('div');
+        toast.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:12px 24px;border-radius:10px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 14px rgba(16,185,129,.35);animation:toastIn .3s ease-out';
+        toast.textContent=msg;
+        document.body.appendChild(toast);
+        setTimeout(()=>{toast.style.opacity='0';toast.style.transition='opacity .3s';setTimeout(()=>toast.remove(),300)},3500);
+    }
+})();
+
+// ============================================================
 // NAV
 // ============================================================
 document.querySelectorAll('.nav-item').forEach(el=>{

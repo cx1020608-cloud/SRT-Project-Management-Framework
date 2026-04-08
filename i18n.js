@@ -199,6 +199,27 @@ const I18N = {
     // Progress short
     p01:'商机',p02:'需求',p03:'方案',p04:'投标',p05:'谈判',p06:'签订',p07:'暂停',p08:'取消',p09:'丢标',p10:'移交',
     of_pipeline: '占管线',
+
+    // Upload & Diff
+    upload_data: '上传数据',
+    upload_title: '数据更新摘要',
+    upload_cancel: '取消',
+    upload_apply: '应用更新',
+    upload_no_change: '未检测到变更',
+    upload_summary: '更新总结',
+    upload_new_records: '新增记录',
+    upload_updated_records: '更新记录',
+    upload_fields_changed: '字段变更',
+    upload_old_val: '旧值',
+    upload_new_val: '新值',
+    upload_field: '字段',
+    upload_record: '记录',
+    upload_applied: '已成功应用更新',
+    upload_parse_error: '文件解析失败，请检查格式',
+    upload_kpi_new: '新增',
+    upload_kpi_updated: '更新',
+    upload_kpi_changes: '字段变更',
+    upload_kpi_unchanged: '无变化',
   },
   ja: {
     nav_main: 'メイン',
@@ -389,6 +410,27 @@ const I18N = {
 
     p01:'商機',p02:'要件',p03:'設計',p04:'入札',p05:'交渉',p06:'受注',p07:'保留',p08:'中止',p09:'失注',p10:'移管',
     of_pipeline: 'パイプライン比',
+
+    // Upload & Diff
+    upload_data: 'アップロード',
+    upload_title: 'データ更新サマリー',
+    upload_cancel: 'キャンセル',
+    upload_apply: '更新を適用',
+    upload_no_change: '変更が検出されませんでした',
+    upload_summary: '更新まとめ',
+    upload_new_records: '新規レコード',
+    upload_updated_records: '更新レコード',
+    upload_fields_changed: 'フィールド変更',
+    upload_old_val: '旧値',
+    upload_new_val: '新値',
+    upload_field: 'フィールド',
+    upload_record: 'レコード',
+    upload_applied: '更新が正常に適用されました',
+    upload_parse_error: 'ファイルの解析に失敗しました。形式を確認してください',
+    upload_kpi_new: '新規',
+    upload_kpi_updated: '更新',
+    upload_kpi_changes: 'フィールド変更',
+    upload_kpi_unchanged: '変更なし',
   }
 };
 
