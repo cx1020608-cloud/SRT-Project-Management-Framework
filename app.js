@@ -24,23 +24,25 @@
 
     document.addEventListener('mousemove',function(e){
         if(pwdFocused)return; // Don't track mouse when password is focused
-        allPupils.forEach(p=>{
-            const rect=p.parentElement.getBoundingClientRect();
-            const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
-            const dx=e.clientX-cx, dy=e.clientY-cy;
-            const dist=Math.sqrt(dx*dx+dy*dy);
-            const max=p.classList.contains('dot')?4:4;
-            const d=Math.min(dist,max);
-            const ang=Math.atan2(dy,dx);
-            p.style.transform=`translate(${Math.cos(ang)*d}px,${Math.sin(ang)*d}px)`;
-        });
-        // Body lean
-        chars.forEach(ch=>{
-            const rect=ch.getBoundingClientRect();
-            const cx=rect.left+rect.width/2;
-            const skew=Math.max(-5,Math.min(5,-(e.clientX-cx)/150));
-            ch.style.transform=`skewX(${skew}deg)`;
-        });
+        if(currentState==='idle'){
+            allPupils.forEach(p=>{
+                const rect=p.parentElement.getBoundingClientRect();
+                const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+                const dx=e.clientX-cx, dy=e.clientY-cy;
+                const dist=Math.sqrt(dx*dx+dy*dy);
+                const max=p.classList.contains('dot')?4:4;
+                const d=Math.min(dist,max);
+                const ang=Math.atan2(dy,dx);
+                p.style.transform=`translate(${Math.cos(ang)*d}px,${Math.sin(ang)*d}px)`;
+            });
+            // Body lean
+            chars.forEach(ch=>{
+                const rect=ch.getBoundingClientRect();
+                const cx=rect.left+rect.width/2;
+                const skew=Math.max(-5,Math.min(5,-(e.clientX-cx)/150));
+                ch.style.transform=`skewX(${skew}deg)`;
+            });
+        }
     });
 
     // Random blinking
@@ -82,11 +84,12 @@
         if(currentState==='peeking')return;
         currentState='peeking';
         pwdFocused=false;
-        const offsets=[28,22,18,24]; // different stretch per char
-        const skews=[-12,-10,-8,-11];
+        const offsets=[80,65,50,70]; // big stretch per char
+        const skews=[-18,-15,-12,-16];
+        const scaleY=[1.08,1.06,1.04,1.07]; // slight vertical stretch
         chars.forEach((ch,i)=>{
-            ch.style.transition='transform .6s cubic-bezier(.34,1.56,.64,1)';
-            ch.style.transform=`translateX(${offsets[i]}px) skewX(${skews[i]}deg)`;
+            ch.style.transition='transform .7s cubic-bezier(.34,1.56,.64,1)';
+            ch.style.transform=`translateX(${offsets[i]}px) skewX(${skews[i]}deg) scaleY(${scaleY[i]})`;
         });
         // Eyes look right and slightly down (reading)
         allPupils.forEach(p=>{
@@ -102,12 +105,12 @@
         pwdFocused=true;
         // Quick snap back to original position
         chars.forEach(ch=>{
-            ch.style.transition='transform .25s cubic-bezier(.4,0,1,1)';
-            ch.style.transform='translateX(0) skewX(4deg)';
+            ch.style.transition='transform .2s cubic-bezier(.4,0,1,1)';
+            ch.style.transform='translateX(-15px) skewX(6deg) scaleY(0.97)';
         });
-        // Eyes snap left
+        // Eyes snap left fast
         allPupils.forEach(p=>{
-            p.style.transition='transform .2s ease-out';
+            p.style.transition='transform .15s ease-out';
             p.style.transform='translate(-4px,1px)';
         });
     }
