@@ -4,7 +4,7 @@
 
 // ── Auth ──
 (function initAuth(){
-    const CRED={user:'SRT_0408',pwd:'SRT2025'};
+    const CRED={user:'admin',pwd:'admin'};
     const screen=document.getElementById('loginScreen');
     const app=document.querySelector('.app');
     if(!screen)return;
@@ -63,23 +63,58 @@
     const pwdInput=document.getElementById('loginPwd');
     const eyeOpen=document.getElementById('eyeOpen');
     const eyeOff=document.getElementById('eyeOff');
+    let pwdFocused=false;
+
     if(eyeBtn)eyeBtn.onclick=function(){
         const show=pwdInput.type==='password';
         pwdInput.type=show?'text':'password';
         eyeOpen.style.display=show?'none':'';
         eyeOff.style.display=show?'':'none';
-        // Characters look away when password visible
-        if(show){
-            allPupils.forEach(p=>{p.style.transform='translate(-4px,-3px)'});
-            chars.forEach(ch=>{ch.style.transform='skewX(-8deg)'});
-        }
     };
-    // Characters look back when hiding password
-    if(pwdInput)pwdInput.addEventListener('input',function(){
-        if(pwdInput.type==='text'){
-            allPupils.forEach(p=>{p.style.transform='translate(-4px,-3px)'});
-        }
-    });
+
+    // Characters turn their backs when password field is focused
+    const allEyeContainers=document.querySelectorAll('.char-eyes');
+    const mouth=document.querySelector('.char-mouth');
+    function charsBack(){
+        if(pwdFocused)return;
+        pwdFocused=true;
+        // Hide all eyes with smooth fade
+        allEyeContainers.forEach(ec=>{ec.style.transition='opacity .4s';ec.style.opacity='0'});
+        if(mouth){mouth.style.transition='opacity .4s';mouth.style.opacity='0'}
+        // Rotate chars slightly away and shrink a bit (shy posture)
+        chars.forEach((ch,i)=>{
+            ch.style.transition='transform .5s cubic-bezier(.4,0,.2,1)';
+            const dir=i%2===0?-1:1;
+            ch.style.transform='scaleX(-1) skewX('+dir*3+'deg)';
+        });
+        // Show back stripes on each character
+        chars.forEach(ch=>{
+            let stripe=ch.querySelector('.back-stripe');
+            if(!stripe){
+                stripe=document.createElement('div');
+                stripe.className='back-stripe';
+                ch.appendChild(stripe);
+            }
+            stripe.style.opacity='1';
+        });
+    }
+    function charsFront(){
+        pwdFocused=false;
+        allEyeContainers.forEach(ec=>{ec.style.transition='opacity .4s';ec.style.opacity='1'});
+        if(mouth){mouth.style.transition='opacity .4s';mouth.style.opacity='1'}
+        chars.forEach(ch=>{
+            ch.style.transition='transform .5s cubic-bezier(.4,0,.2,1)';
+            ch.style.transform='';
+        });
+        chars.forEach(ch=>{
+            const stripe=ch.querySelector('.back-stripe');
+            if(stripe)stripe.style.opacity='0';
+        });
+    }
+    if(pwdInput){
+        pwdInput.addEventListener('focus',charsBack);
+        pwdInput.addEventListener('blur',charsFront);
+    }
 
     // Form submit
     const form=document.getElementById('loginForm');
