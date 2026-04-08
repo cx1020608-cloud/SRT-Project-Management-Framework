@@ -33,7 +33,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
 .sidebar.collapsed{width:0;overflow:hidden;border:none}
 .sidebar-header{padding:20px 16px 14px}
 .logo{display:flex;align-items:center;gap:10px}
-.logo-icon{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff}
+.logo-icon{width:34px;height:34px;background:#93c5fd;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#1e3a5f;letter-spacing:-.5px}
 .logo-title{display:block;font-weight:700;font-size:14.5px;letter-spacing:-.3px;color:var(--text)}
 .logo-sub{display:block;font-size:9.5px;color:var(--text3);font-weight:500;margin-top:1px;letter-spacing:.3px}
 .sidebar-label{padding:14px 16px 4px;font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase}
