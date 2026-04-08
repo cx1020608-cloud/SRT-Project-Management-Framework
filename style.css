@@ -241,7 +241,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
 .login-left{position:relative;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#047857 0%,#10b981 50%,#34d399 100%);padding:40px;overflow:hidden}
 .login-left-top{position:relative;z-index:10}
 .login-brand{display:flex;align-items:center}
-.srt-logo{height:36px;width:auto}
+.srt-logo{height:42px;width:auto;filter:brightness(0) invert(1);opacity:.9}
 .login-left-bottom{position:relative;z-index:10;display:flex;gap:24px}
 .login-left-bottom a{font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:color .2s}
 .login-left-bottom a:hover{color:#fff}
@@ -276,11 +276,6 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
 .dot{width:11px;height:11px;background:#2D2D2D;border-radius:50%;transition:transform .1s ease-out}
 .char-mouth{position:absolute;width:42px;height:3px;background:#2D2D2D;border-radius:2px;left:28px;top:68px;transition:all .15s ease-out}
 
-/* Back stripe — visible when chars turn around */
-.back-stripe{position:absolute;top:20%;left:50%;transform:translateX(-50%);width:60%;height:4px;border-radius:2px;background:rgba(0,0,0,.15);opacity:0;transition:opacity .4s;pointer-events:none}
-.back-stripe::before,.back-stripe::after{content:'';position:absolute;left:0;width:100%;height:4px;border-radius:2px;background:rgba(0,0,0,.15)}
-.back-stripe::before{top:14px}
-.back-stripe::after{top:28px;width:70%}
 
 /* Right Panel */
 .login-right{display:flex;align-items:center;justify-content:center;background:#ffffff;padding:40px;position:relative;z-index:10}

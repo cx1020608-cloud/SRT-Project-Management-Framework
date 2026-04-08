@@ -23,6 +23,7 @@
     let blinkTimers=[];
 
     document.addEventListener('mousemove',function(e){
+        if(pwdFocused)return; // Don't track mouse when password is focused
         allPupils.forEach(p=>{
             const rect=p.parentElement.getBoundingClientRect();
             const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
@@ -72,45 +73,31 @@
         eyeOff.style.display=show?'':'none';
     };
 
-    // Characters turn their backs when password field is focused
-    const allEyeContainers=document.querySelectorAll('.char-eyes');
-    const mouth=document.querySelector('.char-mouth');
-    function charsBack(){
-        if(pwdFocused)return;
+    // Eyes look RIGHT normally (toward the form), look LEFT when password focused
+    function eyesLookRight(){
+        pwdFocused=false;
+        allPupils.forEach(p=>{p.style.transition='transform .3s ease-out';p.style.transform='translate(4px,0)'});
+    }
+    function eyesLookLeft(){
         pwdFocused=true;
-        // Hide all eyes with smooth fade
-        allEyeContainers.forEach(ec=>{ec.style.transition='opacity .4s';ec.style.opacity='0'});
-        if(mouth){mouth.style.transition='opacity .4s';mouth.style.opacity='0'}
-        // Rotate chars slightly away and shrink a bit (shy posture)
-        chars.forEach((ch,i)=>{
-            ch.style.transition='transform .5s cubic-bezier(.4,0,.2,1)';
-            const dir=i%2===0?-1:1;
-            ch.style.transform='scaleX(-1) skewX('+dir*3+'deg)';
-        });
-        // Show back stripes on each character
+        allPupils.forEach(p=>{p.style.transition='transform .3s ease-out';p.style.transform='translate(-4px,1px)'});
+        // Also lean body slightly left
         chars.forEach(ch=>{
-            let stripe=ch.querySelector('.back-stripe');
-            if(!stripe){
-                stripe=document.createElement('div');
-                stripe.className='back-stripe';
-                ch.appendChild(stripe);
-            }
-            stripe.style.opacity='1';
+            ch.style.transition='transform .5s ease-out';
+            ch.style.transform='skewX(3deg)';
         });
     }
+    function charsBack(){ eyesLookLeft(); }
     function charsFront(){
-        pwdFocused=false;
-        allEyeContainers.forEach(ec=>{ec.style.transition='opacity .4s';ec.style.opacity='1'});
-        if(mouth){mouth.style.transition='opacity .4s';mouth.style.opacity='1'}
+        eyesLookRight();
+        // Reset body lean
         chars.forEach(ch=>{
-            ch.style.transition='transform .5s cubic-bezier(.4,0,.2,1)';
+            ch.style.transition='transform .5s ease-out';
             ch.style.transform='';
         });
-        chars.forEach(ch=>{
-            const stripe=ch.querySelector('.back-stripe');
-            if(stripe)stripe.style.opacity='0';
-        });
     }
+    // Set default: eyes look right
+    eyesLookRight();
     if(pwdInput){
         pwdInput.addEventListener('focus',charsBack);
         pwdInput.addEventListener('blur',charsFront);
