@@ -285,8 +285,14 @@ fetch('data.json').then(r=>r.json()).then(d=>{
                 const wb=XLSX.read(ev.target.result,{type:'array',cellDates:true});
                 const ws=wb.Sheets[wb.SheetNames[0]];
                 const rows=XLSX.utils.sheet_to_json(ws);
+                if(!rows.length){alert(t('upload_parse_error')+'\n(empty file)');return;}
                 const {records:mapped}=mapColumns(rows);
-                if(!mapped.length){alert(t('upload_parse_error'));return;}
+                if(!mapped.length){
+                    // Show debug info: what columns were found
+                    const cols=Object.keys(rows[0]).join(', ');
+                    alert(t('upload_parse_error')+'\n\n'+(LANG==='ja'?'検出された列':'检测到的列')+':\n'+cols+'\n\n'+(LANG==='ja'?'ID/CRM/PJTのいずれかの列が必要です':'需要包含 id/crmNo/pjtNo 列'));
+                    return;
+                }
                 const diff=computeDiff(mapped);
                 pendingDiff=diff;
                 showDiffModal(diff);
@@ -299,20 +305,59 @@ fetch('data.json').then(r=>r.json()).then(d=>{
         fileInput.value=''; // reset
     }
 
+    // Resolve a column header to a field name (exact match first, then fuzzy)
+    function resolveCol(col){
+        const c=col.trim();
+        if(COL_MAP[c])return COL_MAP[c];
+        // Try case-insensitive
+        const lower=c.toLowerCase().replace(/[\s_\-]+/g,'');
+        for(const[k,v]of Object.entries(COL_MAP)){
+            if(k.toLowerCase().replace(/[\s_\-]+/g,'')===lower)return v;
+        }
+        // Partial keyword matching for common patterns
+        const FUZZY=[
+            [/crm/i,'crmNo'],[/pjt|proj.*no|案件番/i,'pjtNo'],[/^id$/i,'id'],
+            [/end.*user|客户|顧客|エンド/i,'endUser'],[/proj.*name|项目名|案件名/i,'projectName'],
+            [/country|国/i,'country'],[/region|地区|地域/i,'region'],
+            [/channel|渠道|チャネル|代理/i,'channel'],[/^sales$|销售|営業/i,'sales'],
+            [/engineer|SE|售前|プリセ/i,'salesEngineer'],[/scenario|场景|シナリオ/i,'scenario'],
+            [/custom|定制|カスタ/i,'customization'],[/progress|进度|进展|状态|ステータス/i,'progress'],
+            [/remark|备注|備考|跟进/i,'remarks'],[/order.*date|订单日|受注日/i,'orderDate'],
+            [/hardware.*1|硬件1|ハード.*1/i,'hardware1'],[/qty.*1|数量1/i,'qty1'],
+            [/hardware.*2|硬件2|ハード.*2/i,'hardware2'],[/qty.*2|数量2/i,'qty2'],
+            [/software|软件|ソフト/i,'software'],[/loss|丢单|失注/i,'lossReason'],
+            [/prob|概率|確率|成功率/i,'acceptProb'],[/install|安装|設置|导入/i,'installation'],
+            [/proj.*status|项目状态|案件状況/i,'projectStatus'],
+            [/year|年度|年/i,'year'],[/quarter|四半期|季度/i,'quarter'],
+            [/presale.*doc|資料|售前文档/i,'presalesDoc'],[/quotation|报价|見積/i,'quotation'],
+            [/delivery.*date|交付|納品/i,'deliveryDate']
+        ];
+        for(const[re,field]of FUZZY){
+            if(re.test(c))return field;
+        }
+        return null;
+    }
+
     function mapColumns(rows){
         if(!rows.length)return{records:[],fields:new Set()};
-        // Collect all mapped field names present in the file
-        const fields=new Set();
+        // Build column mapping from first row headers
+        const colHeaders=Object.keys(rows[0]);
+        const headerMap={};
+        colHeaders.forEach(h=>{
+            const field=resolveCol(h);
+            if(field)headerMap[h]=field;
+        });
+
+        const fields=new Set(Object.values(headerMap));
         const records=rows.map(row=>{
             const obj={};
             Object.keys(row).forEach(col=>{
-                const key=COL_MAP[col.trim()];
+                const key=headerMap[col];
                 if(key){
                     let v=row[col];
                     if(v instanceof Date)v=formatDate(v);
                     if(typeof v==='number'&&(key==='year'||key==='quarter'||key==='id'))v=Math.round(v);
                     obj[key]=v;
-                    fields.add(key);
                 }
             });
             return obj;
