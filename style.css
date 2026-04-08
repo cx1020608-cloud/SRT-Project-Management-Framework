@@ -4,7 +4,7 @@
   --bg:#f7f8fa;--bg2:#ffffff;--bg3:#f1f3f5;--bg4:#e9ecef;
   --surface:#ffffff;--surface2:#f7f8fa;--surface3:#f1f3f5;
   --border:#e5e7eb;--border2:#d1d5db;--border-accent:rgba(16,185,129,.18);
-  --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+  --text:#111827;--text2:#6b7280;--text3:#9ca3af;--muted:#9ca3af;
   --accent:#10b981;--accent2:#059669;--accent-bg:rgba(16,185,129,.08);--accent-bg2:rgba(16,185,129,.04);
   --gold:#10b981;--gold2:#059669;--gold3:#047857;--gold-bg:rgba(16,185,129,.08);--gold-bg2:rgba(16,185,129,.04);
   --green:#10b981;--green-bg:rgba(16,185,129,.08);
@@ -280,6 +280,90 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
 .rank-1{background:var(--accent);color:#fff}
 .rank-2{background:var(--surface3);color:var(--text2)}
 .rank-3{background:var(--surface3);color:var(--text3)}
+
+/* ── Missing class aliases (used in marketing.js) ── */
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text)}
+.panel-head span:last-child{font-size:11px;font-weight:500;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:all .15s;box-shadow:var(--shadow)}
+.card:hover{border-color:var(--border2);box-shadow:var(--shadow-md)}
+.card-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.mk-tbl{width:100%;border-collapse:collapse}
+.mk-tbl th{padding:6px 10px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;text-align:left;background:var(--bg3);border-bottom:1px solid var(--border)}
+.mk-tbl td{padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--text)}
+.mk-tbl tbody tr:hover{background:var(--surface2)}
+.view-wrap{width:100%}
+.view-inner{width:100%}
+
+/* ── Spacing utilities ── */
+.mt-sm{margin-top:12px}
+.mt-md{margin-top:16px}
+.mb-sm{margin-bottom:8px}
+.mb-md{margin-bottom:16px}
+.gap-sm{gap:8px}
+.gap-md{gap:12px}
+
+/* ── Section label (9.5px uppercase) ── */
+.sec-label{font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
+
+/* ── Legend row (chart legends) ── */
+.legend-row{display:flex;gap:10px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.legend-item{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--text3)}
+.legend-dot{display:inline-block;width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ── Stacked bar row (sales × stage etc.) ── */
+.stack-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.stack-label{width:55px;font-size:11px;font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stack-bar{flex:1;height:22px;display:flex;border-radius:4px;overflow:hidden}
+.stack-val{min-width:30px;text-align:right;font-size:11px;font-weight:700}
+
+/* ── Alert card (diagnostic conclusions) ── */
+.alert-card{padding:12px 14px;border-left:3px solid var(--border);border-radius:6px;margin-bottom:8px}
+.alert-card.danger{background:var(--red-bg);border-left-color:var(--red)}
+.alert-card.warning{background:var(--orange-bg);border-left-color:var(--orange)}
+.alert-card.info{background:var(--blue-bg);border-left-color:var(--blue)}
+.alert-card.success{background:var(--green-bg);border-left-color:var(--green)}
+.alert-card-head{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.alert-card-icon{font-size:12px}
+.alert-card-title{font-size:11px;font-weight:700}
+.alert-card.danger .alert-card-title{color:var(--red)}
+.alert-card.warning .alert-card-title{color:var(--orange)}
+.alert-card.info .alert-card-title{color:var(--blue)}
+.alert-card.success .alert-card-title{color:var(--green)}
+.alert-card-body{font-size:11px;color:var(--text2);line-height:1.6}
+
+/* ── Inline bar chart (ibar) ── */
+.ibar{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.ibar-label{width:75px;font-size:10.5px;color:var(--text2);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ibar-track{flex:1;height:14px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.ibar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px;transition:width .4s}
+.ibar-fill span{font-size:8.5px;font-weight:700;color:#fff;white-space:nowrap}
+.ibar-val{font-size:10.5px;font-weight:600;min-width:28px;text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+
+/* ── Weekly agenda grid ── */
+.agenda-grid{display:grid;grid-template-columns:60px 1fr;gap:0;margin-top:8px}
+.agenda-time{font-size:10px;font-weight:700;color:var(--accent);padding:10px 8px 10px 0;text-align:right;border-right:2px solid var(--border);position:relative}
+.agenda-time::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:var(--accent);border:2px solid var(--bg2)}
+.agenda-item{padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text)}
+.agenda-item:last-child{border-bottom:none}
+.agenda-topic{font-weight:600;margin-bottom:2px}
+.agenda-detail{font-size:10px;color:var(--text3)}
+
+/* ── Action items (weekly review) ── */
+.action-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:var(--radius);font-size:13px}
+.action-item.danger{background:#fef2f2;border-left:4px solid var(--red)}
+.action-item.warning{background:#fffbeb;border-left:4px solid var(--orange)}
+.action-item.info{background:#eff6ff;border-left:4px solid var(--blue)}
+.action-item .ai-icon{font-weight:700;min-width:20px;flex-shrink:0}
+.action-item.danger .ai-icon{color:var(--red)}
+.action-item.warning .ai-icon{color:var(--orange)}
+.action-item.info .ai-icon{color:var(--blue)}
+.action-item .ai-text{flex:1;color:var(--text);line-height:1.6}
+.action-item .ai-owner{font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px}
+
+/* ── Changelog / Update log ── */
+.cl-stat{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface2);border-radius:var(--radius);font-size:12px}
+.cl-stat .cl-num{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.cl-stat .cl-label{font-size:10px;color:var(--text3)}
 
 @media(max-width:1400px){.kpi-row.c6{grid-template-columns:repeat(3,1fr)}.kpi-row.c5{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:1100px){.g2,.g23,.g32{grid-template-columns:1fr}.kpi-row.c4{grid-template-columns:repeat(2,1fr)}}

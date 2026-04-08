@@ -20,10 +20,8 @@ function stageColor(g){return{early:'var(--blue)',mid:'var(--purple)',late:'var(
 
 // Alert card helper
 function alertCard(level,title,body){
-    const colors={danger:'var(--red)',warning:'var(--orange)',info:'var(--blue)',success:'var(--green)'};
-    const bgs={danger:'var(--red-bg)',warning:'var(--orange-bg)',info:'var(--blue-bg)',success:'var(--green-bg)'};
     const icons={danger:'⚠',warning:'⚡',info:'ℹ',success:'✓'};
-    return`<div style="padding:12px 14px;background:${bgs[level]};border-left:3px solid ${colors[level]};border-radius:6px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-size:12px">${icons[level]}</span><span style="font-size:11px;font-weight:700;color:${colors[level]}">${title}</span></div><div style="font-size:11px;color:var(--text2);line-height:1.6">${body}</div></div>`;
+    return`<div class="alert-card ${level}"><div class="alert-card-head"><span class="alert-card-icon">${icons[level]}</span><span class="alert-card-title">${title}</span></div><div class="alert-card-body">${body}</div></div>`;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -107,15 +105,15 @@ function vMarket(){
         </div>
     </div></div>
 
-    <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">关键图1: Pipeline阶段 × 渠道堆叠</span><span class="panel-badge">哪个渠道在哪个阶段堆积？</span></div><div class="panel-b">
+    <div class="panel mt-sm"><div class="panel-h"><span class="panel-t">关键图1: Pipeline阶段 × 渠道堆叠</span><span class="panel-badge">哪个渠道在哪个阶段堆积？</span></div><div class="panel-b">
         <div class="vbar" style="height:200px">${PROGRESS.map(p=>{const total=topChNames.reduce((a,ch)=>a+(stageCh[p][ch]||0),0);return`<div class="vbar-g"><div class="vbar-v">${total}</div><div style="width:90%;display:flex;flex-direction:column;align-items:center;gap:0">${topChNames.map((ch,ci)=>{const v=stageCh[p][ch]||0;if(!v)return'';return`<div style="width:100%;max-width:36px;height:${Math.max(v/stageMax*160,2)}px;background:${C[ci%C.length]}" title="${ch}: ${v}"></div>`}).join('')}</div><div class="vbar-lb" style="font-size:7.5px">${PS(p)}</div></div>`}).join('')}</div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:8px;flex-wrap:wrap">${topChNames.map((ch,i)=>`<span style="font-size:10px;color:var(--text3)"><span style="display:inline-block;width:8px;height:8px;background:${C[i%C.length]};border-radius:2px;margin-right:3px"></span>${esc(ch)}</span>`).join('')}</div>
+        <div class="legend-row">${topChNames.map((ch,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${C[i%C.length]}"></span>${esc(ch)}</span>`).join('')}</div>
     </div></div>
 
-    <div class="grid g2" style="margin-top:12px">
+    <div class="grid g2 mt-sm">
         <div class="panel"><div class="panel-h"><span class="panel-t">关键图2: 销售 × 阶段分布</span><span class="panel-badge">谁在推进，谁在堆坑？</span></div><div class="panel-b">
-            ${salesList.map(s=>{const d=salesStage[s];const total=d.early+d.mid+d.late+d.closed;return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:55px;font-size:11px;font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s)}</div><div style="flex:1;height:22px;display:flex;border-radius:4px;overflow:hidden">${['early','mid','late','closed'].map(g=>{const v=d[g];if(!v)return'';return`<div style="width:${pct(v,total)}%;background:${stageColor(g)};display:flex;align-items:center;justify-content:center" title="${stageLabel(g)}: ${v}"><span style="font-size:8px;font-weight:700;color:#fff">${v}</span></div>`}).join('')}</div><div style="min-width:30px;text-align:right;font-size:11px;font-weight:700">${total}</div></div>`}).join('')}
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:8px">${['early','mid','late','closed'].map(g=>`<span style="font-size:10px;color:var(--text3)"><span style="display:inline-block;width:8px;height:8px;background:${stageColor(g)};border-radius:2px;margin-right:3px"></span>${stageLabel(g)}</span>`).join('')}</div>
+            ${salesList.map(s=>{const d=salesStage[s];const total=d.early+d.mid+d.late+d.closed;return`<div class="stack-row"><div class="stack-label">${esc(s)}</div><div class="stack-bar">${['early','mid','late','closed'].map(g=>{const v=d[g];if(!v)return'';return`<div style="width:${pct(v,total)}%;background:${stageColor(g)};display:flex;align-items:center;justify-content:center" title="${stageLabel(g)}: ${v}"><span style="font-size:8px;font-weight:700;color:#fff">${v}</span></div>`}).join('')}</div><div class="stack-val">${total}</div></div>`}).join('')}
+            <div class="legend-row">${['early','mid','late','closed'].map(g=>`<span class="legend-item"><span class="legend-dot" style="background:${stageColor(g)}"></span>${stageLabel(g)}</span>`).join('')}</div>
         </div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">关键图3: 场景 × 硬件矩阵</span><span class="panel-badge">产品-场景匹配度</span></div><div class="panel-b np"><div class="tscroll" style="max-height:340px"><table class="tbl"><thead><tr><th>${t('hardware')}</th>${sList.map(s=>`<th class="n">${s}</th>`).join('')}<th class="n">${t('total')}</th></tr></thead>
             <tbody>${topHW.map(h=>{const row=sList.map(s=>shM[h][s]);const tt=row.reduce((a,b)=>a+b,0);return`<tr><td style="font-size:10px;font-weight:600">${esc(h)}</td>${row.map(v=>`<td class="n"><span class="hcell" style="background:${v?`rgba(16,185,129,${Math.max(v/shMax,.1)*0.5})`:'transparent'};color:${v?'var(--accent)':'var(--text3)'}">${v||'-'}</span></td>`).join('')}<td class="n" style="font-weight:700">${tt}</td></tr>`}).join('')}</tbody></table></div></div></div>
@@ -204,7 +202,7 @@ function vFunnel(){
         <div class="panel panel-gold"><div class="panel-h"><span class="panel-t">阶段分布结构</span><span class="panel-badge">是否存在堆积？</span></div><div class="panel-b">
             <div class="vbar" style="height:170px">${PROGRESS.map((p,i)=>{const v=pC[p];const sg=stageGroup(p);return`<div class="vbar-g"><div class="vbar-v">${v}</div><div class="vbar-b" style="height:${Math.max(v/pM*140,2)}px;background:${stageColor(sg)};${p===bottleneck?'box-shadow:0 0 0 2px var(--orange)':''}" title="${PS(p)}: ${v}"></div><div class="vbar-lb" style="font-size:7.5px">${PS(p)}</div></div>`}).join('')}</div>
             <div style="margin-top:10px"><div class="sbar" style="height:10px;border-radius:5px">${['early','mid','late','closed'].map(g=>{const n=g==='early'?earlyN:g==='mid'?midN:g==='late'?lateN:closedN;return`<div class="sbar-s" style="width:${pct(n,T)}%;background:${stageColor(g)}" title="${stageLabel(g)}: ${n} (${pct(n,T)}%)"></div>`}).join('')}</div></div>
-            <div style="display:flex;gap:12px;margin-top:8px">${['early','mid','late','closed'].map(g=>{const n=g==='early'?earlyN:g==='mid'?midN:g==='late'?lateN:closedN;return`<div style="font-size:10px"><span style="display:inline-block;width:8px;height:8px;background:${stageColor(g)};border-radius:2px;margin-right:3px"></span>${stageLabel(g)} <b>${n}</b> (${pct(n,T)}%)</div>`}).join('')}</div>
+            <div class="legend-row" style="justify-content:flex-start;gap:12px">${['early','mid','late','closed'].map(g=>{const n=g==='early'?earlyN:g==='mid'?midN:g==='late'?lateN:closedN;return`<span class="legend-item"><span class="legend-dot" style="background:${stageColor(g)}"></span>${stageLabel(g)} <b>${n}</b> (${pct(n,T)}%)</span>`}).join('')}</div>
             ${bottleneck?`<div style="margin-top:10px;padding:8px 10px;background:var(--orange-bg);border-radius:6px;font-size:11px;color:var(--text2)">⚡ 瓶颈: <b>${PS(bottleneck)}</b> → <b>${PS(PROGRESS[PROGRESS.indexOf(bottleneck)+1]||'')}</b> 落差最大(${maxDrop}件)，推进能力需关注</div>`:''}
         </div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">概率结构 vs 阶段结构</span><span class="panel-badge">异常检测</span></div><div class="panel-b">
@@ -212,15 +210,15 @@ function vFunnel(){
             <tbody>${['early','mid','late'].map(g=>{const d=probStage[g];return`<tr><td><span style="display:inline-block;width:8px;height:8px;background:${stageColor(g)};border-radius:2px;margin-right:4px"></span>${stageLabel(g)}</td><td class="n" style="color:var(--green)">${d.high||'-'}</td><td class="n" style="color:var(--orange)">${d.mid||'-'}</td><td class="n" style="color:var(--red)">${d.low||'-'}</td><td class="n" style="color:var(--red);font-weight:700">${d.none||'-'}</td><td class="n" style="font-weight:700">${d.total}</td></tr>`}).join('')}</tbody></table>
             ${anomalies.length?`<div style="margin-top:10px">${anomalies.map(a=>alertCard(a.type,'概率异常',a.msg)).join('')}</div>`:''}
             <div class="gold-line"></div>
-            <div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">无概率项目按阶段</div>
-            ${['early','mid','late','closed'].map(g=>{const v=noProbByStage[g];const tot=g==='early'?earlyN:g==='mid'?midN:g==='late'?lateN:closedN;return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:36px;font-size:11px;color:var(--text2)">${stageLabel(g)}</div><div style="flex:1;height:14px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${tot?pct(v,tot):0}%;background:var(--red);border-radius:3px;opacity:.7"></div></div><div style="min-width:50px;text-align:right;font-size:10px"><b>${v}</b>/${tot} (${tot?pct(v,tot):0}%)</div></div>`}).join('')}
+            <div class="sec-label" style="margin-bottom:6px">无概率项目按阶段</div>
+            ${['early','mid','late','closed'].map(g=>{const v=noProbByStage[g];const tot=g==='early'?earlyN:g==='mid'?midN:g==='late'?lateN:closedN;return`<div class="ibar"><div class="ibar-label" style="width:36px">${stageLabel(g)}</div><div class="ibar-track"><div class="ibar-fill" style="width:${tot?pct(v,tot):0}%;background:var(--red);opacity:.7"></div></div><div class="ibar-val" style="min-width:50px;font-size:10px"><b>${v}</b>/${tot} (${tot?pct(v,tot):0}%)</div></div>`}).join('')}
         </div></div>
     </div>
 
-    <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">销售人效分析</span><span class="panel-badge">铺量型 vs 深耕型</span></div><div class="panel-b np"><div class="tscroll" style="max-height:400px"><table class="tbl"><thead><tr><th>销售</th><th class="n">总数</th><th class="n">前期</th><th class="n">中期</th><th class="n">后期</th><th class="n">成单</th><th class="n">丢标</th><th class="n">成单率</th><th class="n">推进率</th><th>类型</th><th style="width:140px">阶段分布</th></tr></thead>
+    <div class="panel mt-sm"><div class="panel-h"><span class="panel-t">销售人效分析</span><span class="panel-badge">铺量型 vs 深耕型</span></div><div class="panel-b np"><div class="tscroll" style="max-height:400px"><table class="tbl"><thead><tr><th>销售</th><th class="n">总数</th><th class="n">前期</th><th class="n">中期</th><th class="n">后期</th><th class="n">成单</th><th class="n">丢标</th><th class="n">成单率</th><th class="n">推进率</th><th>类型</th><th style="width:140px">阶段分布</th></tr></thead>
         <tbody>${pushAbility.map((s,i)=>`<tr><td style="font-weight:600">${esc(s.name)}</td><td class="n">${s.total}</td><td class="n" style="color:var(--blue)">${s.early}</td><td class="n" style="color:var(--purple)">${s.mid}</td><td class="n" style="color:var(--green)">${s.late}</td><td class="n" style="color:var(--green);font-weight:700">${s.won}</td><td class="n" style="color:var(--red)">${s.lost}</td><td class="n" style="color:${s.wr>=50?'var(--green)':'var(--text2)'}"><b>${s.wr}%</b></td><td class="n" style="color:${s.pushRate>=50?'var(--green)':'var(--text2)'}"><b>${s.pushRate}%</b></td><td><span class="badge" style="color:${s.typeColor};background:${s.typeColor}15">${s.type}</span></td><td><div style="height:14px;display:flex;border-radius:3px;overflow:hidden">${['early','mid','late','closed'].map(g=>{const v=s[g==='closed'?'lost':g];const w=s.total?pct(g==='closed'?s.lost+cnt(DATA,d=>d.sales===s.name&&CLOSED.includes(d.progress)):v,s.total):0;return w?`<div style="width:${w}%;background:${stageColor(g)}" title="${stageLabel(g)}: ${v}"></div>`:''}).join('')}</div></td></tr>`).join('')}</tbody></table></div></div></div>
 
-    <div class="grid g2" style="margin-top:12px">
+    <div class="grid g2 mt-sm">
         <div class="panel"><div class="panel-h"><span class="panel-t">销售推进能力排名</span><span class="panel-badge">后期+成单占比</span></div><div class="panel-b">
             ${pushAbility.slice(0,8).map((s,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span class="rank-num ${i<3?'rank-'+(i+1):''}">${i+1}</span><div style="width:55px;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div><div style="flex:1;height:20px;background:var(--surface3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${s.pushRate}%;background:${s.pushRate>=50?'var(--green)':'var(--orange)'};border-radius:4px;display:flex;align-items:center;padding-left:6px"><span style="font-size:9px;font-weight:700;color:#fff">${s.pushRate}%</span></div></div><div style="min-width:70px;text-align:right;font-size:10px"><span style="font-weight:700">${s.late+s.won}</span>/${s.total} · <span class="badge" style="color:${s.typeColor};background:${s.typeColor}15;font-size:9px">${s.type}</span></div></div>`).join('')}
         </div></div>
@@ -302,22 +300,22 @@ function vChannelROI(){
 
     <div class="grid g2">
         <div class="panel panel-gold"><div class="panel-h"><span class="panel-t">渠道集中度曲线 (Pareto)</span><span class="panel-badge">前${p80?p80.idx:'-'}个渠道贡献80%项目</span></div><div class="panel-b">
-            ${pareto.slice(0,15).map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="width:15px;font-size:9px;color:var(--text3);text-align:right">${p.idx}</div><div style="width:65px;font-size:10.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.ch)}</div><div style="flex:1;height:16px;background:var(--surface3);border-radius:3px;overflow:hidden;position:relative"><div style="height:100%;width:${pct(p.v,T)}%;background:var(--accent);border-radius:3px;display:flex;align-items:center;padding-left:4px"><span style="font-size:8px;font-weight:700;color:#fff">${p.v}</span></div></div><div style="min-width:55px;text-align:right;font-size:10px"><span style="font-weight:700">${p.cumPct}%</span> <span style="color:var(--text3)">累计</span></div></div>`).join('')}
+            ${pareto.slice(0,15).map((p,i)=>`<div class="ibar" style="margin-bottom:4px"><div style="width:15px;font-size:9px;color:var(--text3);text-align:right">${p.idx}</div><div class="ibar-label" style="width:65px;font-weight:600">${esc(p.ch)}</div><div class="ibar-track" style="height:16px"><div class="ibar-fill" style="width:${pct(p.v,T)}%;background:var(--accent)"><span>${p.v}</span></div></div><div class="ibar-val" style="min-width:55px;font-size:10px"><b>${p.cumPct}%</b> <span style="color:var(--text3)">累計</span></div></div>`).join('')}
             ${channels.length>15?`<div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center">...另有 ${channels.length-15} 个渠道</div>`:''}
         </div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">渠道风险评估</span></div><div class="panel-b">
             ${alertCard(top3Pct>70?'danger':'warning','集中度风险',`Top3渠道(${top3.map(([c])=>c).join('、')})贡献${top3Pct}%项目。${top3Pct>70?'如任一渠道流失，业务将受严重冲击':'集中度中等，但需培育新渠道'}。HHI=${chHHI}`)}
             ${alertCard('info','渠道质量分层',topCh.slice(0,6).map(ch=>`<b>${ch}</b>: ${chClass[ch].label}(后期占${chStage[ch].quality}%，成单率${chStage[ch].wr}%)`).join('<br>'))}
             <div class="gold-line"></div>
-            <div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">渠道分类</div>
+            <div class="sec-label" style="margin-bottom:6px">渠道分类</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">${topCh.map(ch=>`<span class="badge" style="color:${chClass[ch].color};background:${chClass[ch].color}12;border:1px solid ${chClass[ch].color}30">${esc(ch)} · ${chClass[ch].label}</span>`).join('')}</div>
         </div></div>
     </div>
 
-    <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">渠道 × 阶段质量矩阵</span><span class="panel-badge">哪些渠道"只带垃圾线索"？哪些"直接带成交"？</span></div><div class="panel-b np"><div class="tscroll" style="max-height:400px"><table class="tbl"><thead><tr><th>渠道</th><th class="n">总数</th><th class="n">前期</th><th class="n">中期</th><th class="n">后期</th><th class="n">成单</th><th class="n">丢标</th><th class="n">成单率</th><th class="n">质量分</th><th>分类</th><th style="width:140px">阶段分布</th></tr></thead>
+    <div class="panel mt-sm"><div class="panel-h"><span class="panel-t">渠道 × 阶段质量矩阵</span><span class="panel-badge">哪些渠道"只带垃圾线索"？哪些"直接带成交"？</span></div><div class="panel-b np"><div class="tscroll" style="max-height:400px"><table class="tbl"><thead><tr><th>渠道</th><th class="n">总数</th><th class="n">前期</th><th class="n">中期</th><th class="n">后期</th><th class="n">成单</th><th class="n">丢标</th><th class="n">成单率</th><th class="n">质量分</th><th>分类</th><th style="width:140px">阶段分布</th></tr></thead>
         <tbody>${chByQuality.map(ch=>{const s=chStage[ch];return`<tr onclick="goFilter('channel','${esc(ch)}')"><td style="font-weight:600">${esc(ch)}</td><td class="n">${s.tot}</td><td class="n" style="color:var(--blue)">${s.early}</td><td class="n" style="color:var(--purple)">${s.mid}</td><td class="n" style="color:var(--green)">${s.late}</td><td class="n" style="color:var(--green);font-weight:700">${s.won}</td><td class="n" style="color:var(--red)">${s.lost}</td><td class="n" style="color:${s.wr>=50?'var(--green)':'var(--text2)'}">${s.wr}%</td><td class="n gold-num">${s.quality}%</td><td><span class="badge" style="color:${chClass[ch].color};background:${chClass[ch].color}12">${chClass[ch].label}</span></td><td><div style="height:14px;display:flex;border-radius:3px;overflow:hidden">${[['early',s.early],['mid',s.mid],['late',s.late],['closed',s.lost]].map(([g,v])=>v?`<div style="width:${pct(v,s.tot)}%;background:${stageColor(g)}" title="${stageLabel(g)}: ${v}"></div>`:'').join('')}</div></td></tr>`}).join('')}</tbody></table></div></div></div>
 
-    <div class="grid g2" style="margin-top:12px">
+    <div class="grid g2 mt-sm">
         <div class="panel"><div class="panel-h"><span class="panel-t">渠道 × 场景能力标签</span><span class="panel-badge">不是所有渠道都能卖所有产品</span></div><div class="panel-b np"><div class="tscroll" style="max-height:340px"><table class="tbl"><thead><tr><th>渠道</th>${sList.map(s=>`<th class="n">${s}</th>`).join('')}<th class="n">覆盖</th></tr></thead>
             <tbody>${topCh.map(ch=>{const row=sList.map(s=>csMatrix[ch][s]);return`<tr><td style="font-weight:600">${esc(ch)}</td>${row.map(v=>`<td class="n"><span class="hcell" style="background:${v?'var(--accent-bg)':'transparent'};color:${v?'var(--accent)':'var(--text3)'}">${v||'-'}</span></td>`).join('')}<td class="n" style="font-weight:700">${chScenarioCount[ch]}/${sList.length}</td></tr>`}).join('')}</tbody></table></div></div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">渠道年度趋势</span><span class="panel-badge">增长 vs 下降</span></div><div class="panel-b np"><div class="tscroll" style="max-height:340px"><table class="tbl"><thead><tr><th>渠道</th>${years.map(y=>`<th class="n">${y}</th>`).join('')}<th class="n">YoY</th><th style="width:100px">${t('trend')}</th></tr></thead>
@@ -421,12 +419,12 @@ function vPMFit(){
         ${seList.length&&pct(seStats[seList[0]].total,T)>40?`<div style="padding:10px 16px">${alertCard('warning','关键人依赖风险',`${seList[0]} 承担 ${pct(seStats[seList[0]].total,T)}% 项目(${seStats[seList[0]].total}件)，且复杂度指数${seStats[seList[0]].complexity}。该SE离职或超负荷将直接冲击业务。`)}</div>`:''}
     </div></div>
 
-    <div class="grid g3" style="margin-top:12px">
+    <div class="grid g3 mt-sm">
         <div class="panel"><div class="panel-h"><span class="panel-t">技术复杂度分布</span></div><div class="panel-b">
-            ${[['高: 定制+双硬件',complexHigh,'var(--red)'],['中: 定制或双硬件',complexMid,'var(--orange)'],['低: 标准配置',complexLow,'var(--green)']].map(([lbl,v,c])=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:100px;font-size:11px;color:var(--text2)">${lbl}</div><div style="flex:1;height:20px;background:var(--surface3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct(v,T)}%;background:${c};border-radius:4px;display:flex;align-items:center;padding-left:6px"><span style="font-size:9px;font-weight:700;color:#fff">${v}</span></div></div><div style="min-width:35px;text-align:right;font-size:11px;font-weight:700">${pct(v,T)}%</div></div>`).join('')}
+            ${[['高: 定制+双硬件',complexHigh,'var(--red)'],['中: 定制或双硬件',complexMid,'var(--orange)'],['低: 标準配置',complexLow,'var(--green)']].map(([lbl,v,c])=>`<div class="ibar" style="margin-bottom:8px"><div class="ibar-label" style="width:100px">${lbl}</div><div class="ibar-track" style="height:20px"><div class="ibar-fill" style="width:${pct(v,T)}%;background:${c}"><span>${v}</span></div></div><div class="ibar-val" style="min-width:35px">${pct(v,T)}%</div></div>`).join('')}
             <div class="gold-line"></div>
-            <div style="font-size:9.5px;font-weight:600;color:var(--text3);margin-bottom:6px">按场景复杂度</div>
-            ${sList.map(s=>{const d=scComplex[s];return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:45px;font-size:11px;font-weight:600">${s}</div><div style="flex:1;height:14px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${d.cuRate}%;background:var(--purple);border-radius:3px"></div></div><div style="min-width:55px;text-align:right;font-size:10px">${d.cuRate}% <span style="color:var(--text3)">(${d.cu})</span></div></div>`}).join('')}
+            <div class="sec-label" style="margin-bottom:6px">按场景复杂度</div>
+            ${sList.map(s=>{const d=scComplex[s];return`<div class="ibar" style="margin-bottom:4px"><div class="ibar-label" style="width:45px;font-weight:600">${s}</div><div class="ibar-track"><div class="ibar-fill" style="width:${d.cuRate}%;background:var(--purple)"></div></div><div class="ibar-val" style="min-width:55px;font-size:10px">${d.cuRate}% <span style="color:var(--text3)">(${d.cu})</span></div></div>`}).join('')}
         </div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">场景复用分析</span></div><div class="panel-b">
             ${mkDonut(scEntries.slice(0,6),90)}
@@ -440,23 +438,23 @@ function vPMFit(){
             ${(()=>{const fakeList=fakeMatured.slice(0,5).map(d=>'· '+esc(d.crmNo||'')+' '+esc(d.endUser||'')+' ('+PS(d.progress)+')').join('<br>');return alertCard(fakeMatured.length>0?'danger':'success','假成熟项目: '+fakeMatured.length+'件',fakeMatured.length?'以下项目阶段≥合同谈判但无据付计划且无状态更新:<br>'+fakeList+(fakeMatured.length>5?'<br>...等':''):'所有后期项目均有据付或状态记录')})()}
             ${alertCard(lateNoInst.length>0?'warning':'success','后期无据付: '+lateNoInst.length+'件',lateNoInst.length?'已进入后期阶段但installation字段为空，交付规划可能缺失':'后期项目据付信息完整')}
             <div class="gold-line"></div>
-            <div style="font-size:9.5px;font-weight:600;color:var(--text3);margin-bottom:6px">据付状态分布</div>
-            ${instEntries.map(([k,v])=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:55px;font-size:11px">${esc(k)}</div><div style="flex:1;height:16px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct(v,instTotal)}%;background:${k==='完了'?'var(--green)':k==='必要なし'?'var(--blue)':'var(--orange)'};border-radius:3px"></div></div><div style="min-width:24px;text-align:right;font-size:11px;font-weight:700">${v}</div></div>`).join('')}
+            <div class="sec-label" style="margin-bottom:6px">据付状態分布</div>
+            ${instEntries.map(([k,v])=>`<div class="ibar"><div class="ibar-label" style="width:55px">${esc(k)}</div><div class="ibar-track" style="height:16px"><div class="ibar-fill" style="width:${pct(v,instTotal)}%;background:${k==='完了'?'var(--green)':k==='必要なし'?'var(--blue)':'var(--orange)'}"></div></div><div class="ibar-val" style="min-width:24px">${v}</div></div>`).join('')}
             <div class="gold-line"></div>
-            <div style="font-size:9.5px;font-weight:600;color:var(--text3);margin-bottom:6px">验收概率分布</div>
-            ${Object.entries(probGrp).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:35px;font-size:11px;font-weight:600;color:${k==='1'?'var(--green)':k==='0.3'?'var(--orange)':'var(--red)'}">${k==='1'?'100%':k==='0.3'?'30%':'0%'}</div><div style="flex:1;height:16px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct(v,Object.values(probGrp).reduce((a,b)=>a+b,0))}%;background:${k==='1'?'var(--green)':k==='0.3'?'var(--orange)':'var(--red)'};border-radius:3px"></div></div><div style="min-width:24px;text-align:right;font-size:11px;font-weight:700">${v}</div></div>`).join('')}
+            <div class="sec-label" style="margin-bottom:6px">検収確率分布</div>
+            ${Object.entries(probGrp).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="ibar"><div class="ibar-label" style="width:35px;font-weight:600;color:${k==='1'?'var(--green)':k==='0.3'?'var(--orange)':'var(--red)'}">${k==='1'?'100%':k==='0.3'?'30%':'0%'}</div><div class="ibar-track" style="height:16px"><div class="ibar-fill" style="width:${pct(v,Object.values(probGrp).reduce((a,b)=>a+b,0))}%;background:${k==='1'?'var(--green)':k==='0.3'?'var(--orange)':'var(--red)'}"></div></div><div class="ibar-val" style="min-width:24px">${v}</div></div>`).join('')}
         </div></div>
     </div>
 
-    <div class="grid g2" style="margin-top:12px">
+    <div class="grid g2 mt-sm">
         <div class="panel"><div class="panel-h"><span class="panel-t">产品结构: 硬件排名</span><span class="panel-badge">${hwMoving.length} 活跃 / ${hwDead.length} 低频</span></div><div class="panel-b">
-            ${topHW.map(([h,v],i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px"><span class="rank-num ${i<3?'rank-'+(i+1):''}" style="font-size:9px">${i+1}</span><div style="flex:1;font-size:10.5px;font-weight:${v>=5?600:400};color:${v<3?'var(--text3)':'var(--text)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h)}</div><div style="width:80px;height:14px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct(v,topHW[0][1])}%;background:${v>=5?'var(--accent)':'var(--text3)'};border-radius:3px"></div></div><span style="min-width:24px;text-align:right;font-weight:700;font-size:11px">${v}</span></div>`).join('')}
+            ${topHW.map(([h,v],i)=>`<div class="ibar"><span class="rank-num ${i<3?'rank-'+(i+1):''}" style="font-size:9px">${i+1}</span><div class="ibar-label" style="width:auto;flex:1;font-weight:${v>=5?600:400};color:${v<3?'var(--text3)':'var(--text)'}">${esc(h)}</div><div class="ibar-track" style="width:80px;flex:none"><div class="ibar-fill" style="width:${pct(v,topHW[0][1])}%;background:${v>=5?'var(--accent)':'var(--text3)'}"></div></div><span class="ibar-val" style="min-width:24px">${v}</span></div>`).join('')}
             <div class="gold-line"></div>
-            <div style="font-size:9.5px;font-weight:600;color:var(--text3);margin-bottom:6px">软件搭载</div>
+            <div class="sec-label" style="margin-bottom:6px">软件搭载</div>
             ${topSW.length?topSW.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span class="rank-num ${i<3?'rank-'+(i+1):''}" style="font-size:9px">${i+1}</span><div style="flex:1;font-size:11px">${esc(k)}</div><span style="font-weight:700">${v}</span></div>`).join(''):`<div style="color:var(--text3);font-size:11px">${t('no_data')}</div>`}
         </div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">区域结构</span><span class="panel-badge">HHI: ${regHHI}</span></div><div class="panel-b">
-            ${topRegs.map(([r,v],i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:70px;font-size:10.5px;color:var(--text2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r)}</div><div style="flex:1;height:18px;background:var(--surface3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct(v,topRegs[0][1])}%;background:${C[i%C.length]};border-radius:4px;display:flex;align-items:center;padding-left:5px"><span style="font-size:8.5px;font-weight:700;color:#fff">${v}</span></div></div><div style="min-width:35px;text-align:right;font-size:10.5px;font-weight:700">${pct(v,T)}%</div></div>`).join('')}
+            ${topRegs.map(([r,v],i)=>`<div class="ibar"><div class="ibar-label" style="width:70px">${esc(r)}</div><div class="ibar-track" style="height:18px"><div class="ibar-fill" style="width:${pct(v,topRegs[0][1])}%;background:${C[i%C.length]}"><span>${v}</span></div></div><div class="ibar-val" style="min-width:35px">${pct(v,T)}%</div></div>`).join('')}
             ${regEntries.length>10?`<div style="font-size:10px;color:var(--text3);margin-top:6px">...另有 ${regEntries.length-10} 个地域</div>`:''}
             ${alertCard(regHHI>3000?'warning':'info','区域集中度: '+(regHHI>3000?'偏高':'适中'),regHHI>3000?`项目过度集中在${topRegs[0][0]}等少数区域。建议: 评估潜力区域拓展机会`:'区域分布较健康，继续保持多区域覆盖')}
         </div></div>
@@ -602,7 +600,7 @@ function vDecisions(){
         </div></div>
     </div>
 
-    <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">3C分析: Company × Customer × Competitor</span></div><div class="panel-b">
+    <div class="panel mt-sm"><div class="panel-h"><span class="panel-t">3C分析: Company × Customer × Competitor</span></div><div class="panel-b">
         <div class="grid g3">
             <div style="padding:12px;background:var(--green-bg);border-radius:8px"><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">Company (自社)</div>
                 <div style="font-size:10px;color:var(--text2);line-height:1.8">
@@ -634,10 +632,10 @@ function vDecisions(){
         </div>
     </div></div>
 
-    <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">战略决策汇总: 投 / 不投 / 扩 / 收</span><span class="panel-badge">所有模型收敛为明确结论</span></div><div class="panel-b np"><div class="tscroll" style="max-height:450px"><table class="tbl"><thead><tr><th>维度</th><th>对象</th><th class="n">项目数</th><th class="n">增长率</th><th class="n">成单率</th><th>决策</th><th>依据</th></tr></thead>
+    <div class="panel mt-sm"><div class="panel-h"><span class="panel-t">战略决策汇总: 投 / 不投 / 扩 / 收</span><span class="panel-badge">所有模型收敛为明确结论</span></div><div class="panel-b np"><div class="tscroll" style="max-height:450px"><table class="tbl"><thead><tr><th>维度</th><th>对象</th><th class="n">项目数</th><th class="n">增长率</th><th class="n">成单率</th><th>决策</th><th>依据</th></tr></thead>
         <tbody>${decisions.map(d=>`<tr><td><span class="badge b-gray">${d.dim}</span></td><td style="font-weight:600">${esc(d.name)}</td><td class="n">${d.n}</td><td class="n" style="color:${d.growth>0?'var(--green)':d.growth<0?'var(--red)':'var(--text3)'}">${d.growth>0?'+':''}${d.growth}%</td><td class="n" style="color:${d.wr>=50?'var(--green)':'var(--text2)'}">${d.wr}%</td><td><span class="badge" style="background:${levelBg[d.level]};color:${levelColor[d.level]}">${d.action}</span></td><td style="font-size:10px;color:var(--text3)">${d.level==='invest'?'高成单+正增长→全力':''}${d.level==='hold'?'规模可观→维持现状':''}${d.level==='selective'?'需评估ROI后决定':''}${d.level==='divest'?'低效→减少资源投入':''}</td></tr>`).join('')}</tbody></table></div></div></div>
 
-    <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">落地监控指标 (KPI体系建议)</span></div><div class="panel-b">
+    <div class="panel mt-sm"><div class="panel-h"><span class="panel-t">落地监控指标 (KPI体系建议)</span></div><div class="panel-b">
         <div class="grid g2">
             <div>
                 ${alertCard('info','战略层 KPI','· 场景集中度(HHI): 当前 <b>'+hhi(sList.map(s=>cnt(DATA,d=>d.scenario===s)))+'</b> → 目标 <3000<br>· 新市场贡献比: 当前 <b>'+pct(cnt(DATA,d=>!new Set(DATA.filter(dd=>dd.year===years[0]).map(dd=>(dd.country||'').trim())).has((d.country||'').trim())&&d.year>years[0]),T)+'%</b><br>· 产品线宽度: <b>'+Object.keys(grp(DATA,'hardware1')).length+'</b>个型号')}
@@ -806,19 +804,19 @@ function vNews(){
     }
 
     return `<div class="view-wrap"><div class="view-inner">
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
+        <div class="kpi-row c4">
             <div class="kpi"><div class="kpi-label">${isZh?'新闻条数':'ニュース数'}</div><div class="kpi-val">${newsData.length}</div><div class="kpi-sub">${isZh?'近15天 '+recent.length+' 条':'直近15日 '+recent.length+' 件'}</div></div>
             <div class="kpi"><div class="kpi-label">${isZh?'市场规模':'市場規模'}</div><div class="kpi-val" style="font-size:20px">¥9,087<span style="font-size:12px;color:var(--muted)"> ${isZh?'亿':'億'}</span></div><div class="kpi-sub">AGV/AMR 2026${isZh?'年全球':'年グローバル'}</div></div>
             <div class="kpi"><div class="kpi-label">${isZh?'亚太份额':'アジア太平洋シェア'}</div><div class="kpi-val" style="color:var(--green)">39.5%</div><div class="kpi-sub">CAGR 17.9%</div></div>
             <div class="kpi"><div class="kpi-label">${isZh?'仓储机器人CAGR':'倉庫ロボットCAGR'}</div><div class="kpi-val" style="color:var(--blue)">13.8%</div><div class="kpi-sub">2025→2035</div></div>
         </div>
 
-        <div class="panel" style="margin-bottom:20px">
+        <div class="panel mb-md">
             <div class="panel-head"><span>${isZh?'📊 近15天行业趋势总结':'📊 直近15日間の業界トレンドまとめ'}</span><span style="font-size:11px;color:var(--muted)">${isZh?'更新：2026-04-07':'更新：2026-04-07'}</span></div>
             <div style="padding:20px;font-size:13px;line-height:1.9;color:var(--text)">${summary}</div>
         </div>
 
-        <div class="panel" style="margin-bottom:20px">
+        <div class="panel mb-md">
             <div class="panel-head"><span>${isZh?'🔥 近15天重要新闻':'🔥 直近15日間の注目ニュース'}</span><span style="font-size:11px;color:var(--muted)">${recent.length} ${isZh?'条':'件'}</span></div>
             ${recent.map(newsCard).join('')}
         </div>
@@ -934,7 +932,7 @@ function vWeekly(){
     return `<div class="view-wrap"><div class="view-inner">
 
         <!-- KPI Row -->
-        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:20px">
+        <div class="kpi-row c6">
             <div class="kpi"><div class="kpi-label">${l('活跃项目','アクティブ案件')}</div><div class="kpi-val" style="color:var(--blue)">${active.length}</div><div class="kpi-sub">${l('占总数','全体比')} ${pct(active.length,T)}%</div></div>
             <div class="kpi"><div class="kpi-label">${l('后期阶段','後期段階')}</div><div class="kpi-val" style="color:var(--green)">${late.length}</div><div class="kpi-sub">${l('谈判+签订','交渉+契約')}</div></div>
             <div class="kpi"><div class="kpi-label">${l('成单','受注')}</div><div class="kpi-val" style="color:#10b981">${won.length}</div><div class="kpi-sub">${l('成单率','受注率')} ${pct(won.length,won.length+lost.length)}%</div></div>
@@ -944,32 +942,32 @@ function vWeekly(){
         </div>
 
         <!-- Action Items -->
-        <div class="panel" style="margin-bottom:20px">
+        <div class="panel mb-md">
             <div class="panel-head"><span>🚨 ${l('本周行动项','今週のアクションアイテム')}</span><span style="font-size:11px;color:var(--muted)">${actions.length} ${l('项','件')}</span></div>
-            <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
-                ${actions.length?actions.map((a,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:12px 16px;border-radius:8px;background:${a.level==='danger'?'#fef2f2':a.level==='warning'?'#fffbeb':'#eff6ff'};border-left:4px solid ${a.level==='danger'?'#ef4444':a.level==='warning'?'#f59e0b':'#3b82f6'}">
-                    <span style="font-weight:700;color:${a.level==='danger'?'#ef4444':a.level==='warning'?'#f59e0b':'#3b82f6'};font-size:13px;min-width:20px">${i+1}.</span>
-                    <span style="font-size:13px;line-height:1.6;color:var(--text)">${a.text}</span>
-                </div>`).join(''):`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">✅ ${l('本周无紧急行动项','今週の緊急アクションアイテムなし')}</div>`}
+            <div class="panel-b" style="display:flex;flex-direction:column;gap:10px">
+                ${actions.length?actions.map((a,i)=>`<div class="action-item ${a.level}">
+                    <span class="ai-icon">${i+1}.</span>
+                    <span class="ai-text">${a.text}</span>
+                </div>`).join(''):`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">${l('本周无紧急行动项','今週の緊急アクションアイテムなし')}</div>`}
             </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div class="grid g2 mb-md">
 
             <!-- Pipeline Funnel -->
             <div class="panel">
                 <div class="panel-head"><span>📊 ${l('Pipeline 阶段分布','Pipeline 段階分布')}</span></div>
-                <div style="padding:16px">
+                <div class="panel-b">
                     ${stageCounts.map(s=>{
                         const w=Math.max(s.count/maxStage*100,8);
                         const color=P_COLOR[s.stage]||'#94a3b8';
                         const isActive=ACTIVE_STAGES.includes(s.stage);
-                        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-                            <div style="width:80px;font-size:11px;color:var(--muted);text-align:right;white-space:nowrap">${PS(s.stage)}</div>
-                            <div style="flex:1;background:var(--bg);border-radius:6px;height:26px;position:relative;overflow:hidden">
-                                <div style="height:100%;width:${w}%;background:${color};border-radius:6px;opacity:${isActive?1:0.5};transition:width .5s"></div>
+                        return `<div class="ibar" style="margin-bottom:8px">
+                            <div class="ibar-label" style="width:80px">${PS(s.stage)}</div>
+                            <div class="ibar-track" style="height:26px;background:var(--bg);border-radius:6px">
+                                <div class="ibar-fill" style="width:${w}%;background:${color};opacity:${isActive?1:0.5}"></div>
                             </div>
-                            <div style="min-width:36px;font-size:13px;font-weight:600;color:${isActive?'var(--text)':'var(--muted)'}">${s.count}</div>
+                            <div class="ibar-val" style="min-width:36px;font-size:13px;font-weight:600;color:${isActive?'var(--text)':'var(--muted)'}">${s.count}</div>
                         </div>`;
                     }).join('')}
                 </div>
@@ -978,16 +976,16 @@ function vWeekly(){
             <!-- Data Completeness -->
             <div class="panel">
                 <div class="panel-head"><span>📋 ${l('数据完整度检查','データ完全度チェック')}</span><span style="font-size:11px;color:var(--muted)">${l('活跃项目','アクティブ案件')}</span></div>
-                <div style="padding:16px">
+                <div class="panel-b">
                     ${completeness.map(f=>{
                         const barColor=f.pct>=80?'#10b981':f.pct>=50?'#f59e0b':'#ef4444';
-                        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                        return `<div class="ibar" style="margin-bottom:10px">
                             <div style="width:24px;text-align:center;font-size:14px">${f.icon}</div>
-                            <div style="width:80px;font-size:12px;color:var(--text)">${isZh?f.zh:f.ja}</div>
-                            <div style="flex:1;background:var(--bg);border-radius:6px;height:20px;position:relative;overflow:hidden">
-                                <div style="height:100%;width:${Math.max(f.pct,3)}%;background:${barColor};border-radius:6px;transition:width .5s"></div>
+                            <div class="ibar-label" style="width:80px;color:var(--text);font-size:12px">${isZh?f.zh:f.ja}</div>
+                            <div class="ibar-track" style="height:20px;background:var(--bg);border-radius:6px">
+                                <div class="ibar-fill" style="width:${Math.max(f.pct,3)}%;background:${barColor}"></div>
                             </div>
-                            <div style="min-width:70px;font-size:11px;color:var(--muted);text-align:right">${f.filled}/${f.total} <b style="color:${barColor}">${f.pct}%</b></div>
+                            <div class="ibar-val" style="min-width:70px;font-size:11px;color:var(--muted)">${f.filled}/${f.total} <b style="color:${barColor}">${f.pct}%</b></div>
                         </div>`;
                     }).join('')}
                     <div style="margin-top:12px;padding:10px;border-radius:6px;background:#fffbeb;font-size:11px;color:#92400e;line-height:1.6">
@@ -998,7 +996,7 @@ function vWeekly(){
         </div>
 
         <!-- Sales Scorecard -->
-        <div class="panel" style="margin-bottom:20px">
+        <div class="panel mb-md">
             <div class="panel-head"><span>👤 ${l('销售周报卡','営業週次スコアカード')}</span><span style="font-size:11px;color:var(--muted)">${Object.keys(salesMap).length} ${l('人','名')}</span></div>
             <table class="tbl">
                 <thead><tr>
@@ -1048,7 +1046,7 @@ function vWeekly(){
             </table>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div class="grid g2 mb-md">
 
             <!-- SE Workload -->
             <div class="panel">
@@ -1084,15 +1082,15 @@ function vWeekly(){
             <!-- Stalled Projects -->
             <div class="panel">
                 <div class="panel-head"><span>⏸ ${l('无跟进记录项目','フォロー記録なし案件')}</span><span style="font-size:11px;color:var(--red)">${stalled.length} ${l('件','件')}</span></div>
-                <div style="padding:16px">
+                <div class="panel-b">
                     <div style="margin-bottom:12px;font-size:12px;color:var(--muted);line-height:1.6">${l('以下活跃项目remarks字段为空，无法判断跟进状态。建议周会时逐一确认。','以下のアクティブ案件はremarksが空白で、フォロー状況が不明。週次会議で個別に確認を推奨。')}</div>
                     ${Object.entries(stalledByStage).sort((a,b)=>b[1]-a[1]).map(([stage,count])=>{
-                        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                        return `<div class="ibar" style="margin-bottom:6px">
                             <span class="badge ${pB(stage)}" style="font-size:10px">${PS(stage)}</span>
-                            <div style="flex:1;background:var(--bg);border-radius:6px;height:18px;overflow:hidden">
-                                <div style="height:100%;width:${Math.max(count/stalled.length*100,5)}%;background:${P_COLOR[stage]||'#94a3b8'};border-radius:6px"></div>
+                            <div class="ibar-track" style="height:18px;background:var(--bg);border-radius:6px">
+                                <div class="ibar-fill" style="width:${Math.max(count/stalled.length*100,5)}%;background:${P_COLOR[stage]||'#94a3b8'}"></div>
                             </div>
-                            <span style="font-size:12px;font-weight:600;min-width:24px">${count}</span>
+                            <span class="ibar-val" style="min-width:24px;font-size:12px">${count}</span>
                         </div>`;
                     }).join('')}
                     <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
@@ -1103,7 +1101,7 @@ function vWeekly(){
             </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div class="grid g2 mb-md">
 
             <!-- Scenario Summary -->
             <div class="panel">
@@ -1174,7 +1172,7 @@ function vWeekly(){
         </div>
 
         <!-- Late-stage Risk Detail -->
-        ${lateRisk.length?`<div class="panel" style="margin-bottom:20px">
+        ${lateRisk.length?`<div class="panel mb-md">
             <div class="panel-head"><span>🔴 ${l('后期项目风险清单','後期案件リスクリスト')}</span><span style="font-size:11px;color:var(--red)">${lateRisk.length} ${l('件需关注','件要注目')}</span></div>
             <table class="tbl">
                 <thead><tr>
