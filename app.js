@@ -1,6 +1,112 @@
 // ============================================================
 // PM Project Intelligence Platform — app.js (i18n + Glassmorphism)
 // ============================================================
+
+// ── Auth ──
+(function initAuth(){
+    const CRED={user:'SRT_0408',pwd:'SRT2025'};
+    const screen=document.getElementById('loginScreen');
+    const app=document.querySelector('.app');
+    if(!screen)return;
+
+    // Already logged in
+    if(sessionStorage.getItem('piq_auth')==='1'){
+        screen.style.display='none';
+        app.style.display='';
+        return;
+    }
+
+    // Eye tracking for characters
+    const chars=document.querySelectorAll('.char');
+    const allPupils=document.querySelectorAll('.pupil, .dot');
+    const allEyes=document.querySelectorAll('.eye');
+    let blinkTimers=[];
+
+    document.addEventListener('mousemove',function(e){
+        allPupils.forEach(p=>{
+            const rect=p.parentElement.getBoundingClientRect();
+            const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+            const dx=e.clientX-cx, dy=e.clientY-cy;
+            const dist=Math.sqrt(dx*dx+dy*dy);
+            const max=p.classList.contains('dot')?4:4;
+            const d=Math.min(dist,max);
+            const ang=Math.atan2(dy,dx);
+            p.style.transform=`translate(${Math.cos(ang)*d}px,${Math.sin(ang)*d}px)`;
+        });
+        // Body lean
+        chars.forEach(ch=>{
+            const rect=ch.getBoundingClientRect();
+            const cx=rect.left+rect.width/2;
+            const skew=Math.max(-5,Math.min(5,-(e.clientX-cx)/150));
+            ch.style.transform=`skewX(${skew}deg)`;
+        });
+    });
+
+    // Random blinking
+    function scheduleBlink(eyeSet){
+        const t=setTimeout(()=>{
+            eyeSet.forEach(eye=>eye.classList.add('blink'));
+            setTimeout(()=>{
+                eyeSet.forEach(eye=>eye.classList.remove('blink'));
+                scheduleBlink(eyeSet);
+            },150);
+        },Math.random()*4000+2500);
+        blinkTimers.push(t);
+    }
+    const purpleEyes=document.querySelectorAll('#charPurple .eye');
+    const blackEyes=document.querySelectorAll('#charBlack .eye');
+    if(purpleEyes.length)scheduleBlink(purpleEyes);
+    if(blackEyes.length)scheduleBlink(blackEyes);
+
+    // Password show/hide
+    const eyeBtn=document.getElementById('loginEyeBtn');
+    const pwdInput=document.getElementById('loginPwd');
+    const eyeOpen=document.getElementById('eyeOpen');
+    const eyeOff=document.getElementById('eyeOff');
+    if(eyeBtn)eyeBtn.onclick=function(){
+        const show=pwdInput.type==='password';
+        pwdInput.type=show?'text':'password';
+        eyeOpen.style.display=show?'none':'';
+        eyeOff.style.display=show?'':'none';
+        // Characters look away when password visible
+        if(show){
+            allPupils.forEach(p=>{p.style.transform='translate(-4px,-3px)'});
+            chars.forEach(ch=>{ch.style.transform='skewX(-8deg)'});
+        }
+    };
+    // Characters look back when hiding password
+    if(pwdInput)pwdInput.addEventListener('input',function(){
+        if(pwdInput.type==='text'){
+            allPupils.forEach(p=>{p.style.transform='translate(-4px,-3px)'});
+        }
+    });
+
+    // Form submit
+    const form=document.getElementById('loginForm');
+    const errEl=document.getElementById('loginError');
+    form.onsubmit=function(e){
+        e.preventDefault();
+        const user=document.getElementById('loginUser').value.trim();
+        const pwd=document.getElementById('loginPwd').value;
+        if(user===CRED.user&&pwd===CRED.pwd){
+            if(document.getElementById('loginRemember').checked){
+                sessionStorage.setItem('piq_auth','1');
+            }
+            sessionStorage.setItem('piq_auth','1');
+            screen.classList.add('hiding');
+            setTimeout(()=>{
+                screen.style.display='none';
+                app.style.display='';
+            },500);
+            blinkTimers.forEach(clearTimeout);
+        }else{
+            errEl.textContent='Account or password incorrect. Please try again.';
+            errEl.classList.add('show');
+            form.querySelector('.login-btn').style.animation='loginShake .4s';
+            setTimeout(()=>{form.querySelector('.login-btn').style.animation=''},400);
+        }
+    };
+})();
 let RAW=[],DATA=[];
 let currentView='overview';
 let sortField='id',sortDir='asc';
