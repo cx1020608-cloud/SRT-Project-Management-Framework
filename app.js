@@ -73,34 +73,75 @@
         eyeOff.style.display=show?'':'none';
     };
 
-    // Eyes look RIGHT normally (toward the form), look LEFT when password focused
-    function eyesLookRight(){
+    // ── Character animations ──
+    const userInput=document.getElementById('loginUser');
+    let currentState='idle'; // idle | peeking | hiding
+
+    // Peek right: stretch bodies toward form to "see" what's being typed
+    function charsPeek(){
+        if(currentState==='peeking')return;
+        currentState='peeking';
         pwdFocused=false;
-        allPupils.forEach(p=>{p.style.transition='transform .3s ease-out';p.style.transform='translate(4px,0)'});
-    }
-    function eyesLookLeft(){
-        pwdFocused=true;
-        allPupils.forEach(p=>{p.style.transition='transform .3s ease-out';p.style.transform='translate(-4px,1px)'});
-        // Also lean body slightly left
-        chars.forEach(ch=>{
-            ch.style.transition='transform .5s ease-out';
-            ch.style.transform='skewX(3deg)';
+        const offsets=[28,22,18,24]; // different stretch per char
+        const skews=[-12,-10,-8,-11];
+        chars.forEach((ch,i)=>{
+            ch.style.transition='transform .6s cubic-bezier(.34,1.56,.64,1)';
+            ch.style.transform=`translateX(${offsets[i]}px) skewX(${skews[i]}deg)`;
+        });
+        // Eyes look right and slightly down (reading)
+        allPupils.forEach(p=>{
+            p.style.transition='transform .4s ease-out';
+            p.style.transform='translate(4px,2px)';
         });
     }
-    function charsBack(){ eyesLookLeft(); }
-    function charsFront(){
-        eyesLookRight();
-        // Reset body lean
+
+    // Hide: snap back fast + eyes look left
+    function charsHide(){
+        if(currentState==='hiding')return;
+        currentState='hiding';
+        pwdFocused=true;
+        // Quick snap back to original position
+        chars.forEach(ch=>{
+            ch.style.transition='transform .25s cubic-bezier(.4,0,1,1)';
+            ch.style.transform='translateX(0) skewX(4deg)';
+        });
+        // Eyes snap left
+        allPupils.forEach(p=>{
+            p.style.transition='transform .2s ease-out';
+            p.style.transform='translate(-4px,1px)';
+        });
+    }
+
+    // Return to idle
+    function charsIdle(){
+        currentState='idle';
+        pwdFocused=false;
         chars.forEach(ch=>{
             ch.style.transition='transform .5s ease-out';
             ch.style.transform='';
         });
+        allPupils.forEach(p=>{
+            p.style.transition='transform .3s ease-out';
+            p.style.transform='translate(3px,0)';
+        });
     }
-    // Set default: eyes look right
-    eyesLookRight();
+
+    // Set default: eyes slightly right
+    allPupils.forEach(p=>{p.style.transform='translate(3px,0)'});
+
+    // Account field: characters peek right
+    if(userInput){
+        userInput.addEventListener('focus',charsPeek);
+        userInput.addEventListener('blur',function(){
+            if(document.activeElement!==pwdInput) charsIdle();
+        });
+    }
+    // Password field: characters snap back + eyes left
     if(pwdInput){
-        pwdInput.addEventListener('focus',charsBack);
-        pwdInput.addEventListener('blur',charsFront);
+        pwdInput.addEventListener('focus',charsHide);
+        pwdInput.addEventListener('blur',function(){
+            if(document.activeElement!==userInput) charsIdle();
+        });
     }
 
     // Form submit

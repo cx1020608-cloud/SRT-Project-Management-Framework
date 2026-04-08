@@ -240,8 +240,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
 /* Left Panel */
 .login-left{position:relative;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#047857 0%,#10b981 50%,#34d399 100%);padding:40px;overflow:hidden}
 .login-left-top{position:relative;z-index:10}
-.login-brand{display:flex;align-items:center}
-.srt-logo{height:42px;width:auto;filter:brightness(0) invert(1);opacity:.9}
+.login-brand{display:flex;align-items:center;height:36px}
 .login-left-bottom{position:relative;z-index:10;display:flex;gap:24px}
 .login-left-bottom a{font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:color .2s}
 .login-left-bottom a:hover{color:#fff}
