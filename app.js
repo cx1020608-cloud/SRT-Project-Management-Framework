@@ -175,7 +175,7 @@
 })();
 let RAW=[],DATA=[];
 let currentView='overview';
-let sortField='id',sortDir='asc';
+let sortField='id',sortDir='desc';
 let projPage=1;
 const PG=40;
 
@@ -598,6 +598,9 @@ function applyGF(){
 // ============================================================
 function renderView(){
     const c=document.getElementById('contentArea');
+    // Exclude SRT projects from analysis views (projects view keeps all)
+    const fullData=DATA;
+    if(currentView!=='projects')DATA=fullData.filter(d=>d.scenario!=='SRT');
     switch(currentView){
         case'overview':c.innerHTML=vOverview();break;
         case'pipeline':c.innerHTML=vPipeline();break;
@@ -613,6 +616,7 @@ function renderView(){
         case'news':c.innerHTML=vNews();break;
         case'weekly':c.innerHTML=vWeekly();break;
     }
+    DATA=fullData;
 }
 
 // ============================================================
