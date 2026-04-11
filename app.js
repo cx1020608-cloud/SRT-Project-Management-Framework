@@ -633,8 +633,10 @@ function vOverview(){
     const cu=cnt(DATA,d=>d.customization==='〇');
     const cr=T?pct(cu,T):0;
     const yr=new Date().getFullYear();
-    const ly=RAW.filter(d=>d.year===yr-1),ty=RAW.filter(d=>d.year===yr);
-    const yoy=ly.length?Math.round((ty.length-ly.length)/ly.length*100):0;
+    const qr=Math.ceil((new Date().getMonth()+1)/3);
+    const tyq=DATA.filter(d=>d.year===yr&&d.quarter<=qr);
+    const lyq=DATA.filter(d=>d.year===yr-1&&d.quarter<=qr);
+    const yoy=lyq.length?Math.round((tyq.length-lyq.length)/lyq.length*100):0;
 
     const pC={};PROGRESS.forEach(p=>pC[p]=cnt(DATA,d=>d.progress===p));
     const pM=Math.max(...Object.values(pC),1);
@@ -649,7 +651,7 @@ function vOverview(){
 
     return`
     <div class="kpi-row c6">
-        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('total_projects')}</span><span class="kpi-trend ${yoy>=0?'up':'down'}">${yoy>=0?'↑':'↓'}${Math.abs(yoy)}% ${t('yoy')}</span></div><div class="kpi-val">${T}</div><div class="kpi-sub">${ty.length} ${yr}${t('projects_in')}</div></div>
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('total_projects')}</span><span class="kpi-trend ${yoy>=0?'up':'down'}">${yoy>=0?'↑':'↓'}${Math.abs(yoy)}% ${t('yoy')}</span></div><div class="kpi-val">${T}</div><div class="kpi-sub">${tyq.length} ${yr} Q1-Q${qr}${t('projects_in')}</div></div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('active_pipeline')}</span></div><div class="kpi-val" style="color:var(--blue)">${ac}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${pct(ac,T)}%;background:var(--blue)"></div></div><div class="kpi-sub">${pct(ac,T)}% ${t('of_total')}</div></div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('transferred')}</span></div><div class="kpi-val" style="color:var(--accent)">${tr}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${pct(tr,T)}%;background:var(--accent)"></div></div><div class="kpi-sub">${pct(tr,T)}% ${t('completion')}</div></div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('win_rate')}</span></div><div class="kpi-val" style="color:var(--green)">${wr}%</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${wr}%;background:var(--green)"></div></div><div class="kpi-sub">${tr+sg} ${t('won_total')} ${T}</div></div>
@@ -836,7 +838,6 @@ function vChannels(){
 function vHardware(){
     const T=DATA.length;
     const hw1=topN(grp(DATA,'hardware1'),20);
-    const hw2=topN(grp(DATA.filter(d=>d.hardware2),'hardware2'),10);
     const sw=topN(grp(DATA.filter(d=>d.software),'software'),10);
     const scenarios=[...new Set(DATA.map(d=>d.scenario).filter(Boolean))].sort();
     const hwM=hw1.slice(0,12).map(([h])=>h);
@@ -854,11 +855,8 @@ function vHardware(){
     </div>
     <div class="grid g2">
         <div class="panel"><div class="panel-h"><span class="panel-t">${t('primary_hw_ranking')}</span><span class="panel-badge">${hw1.length} ${t('models')}</span></div><div class="panel-b"><div class="hbar">${hw1.map(([k,v],i)=>`<div class="hbar-r"><div class="hbar-l" style="width:140px">${esc(k)}</div><div class="hbar-t"><div class="hbar-f" style="width:${pct(v,hw1[0][1])}%;background:${C[i%C.length]}"><span>${v}</span></div></div><div class="hbar-e">${pct(v,T)}%</div></div>`).join('')}</div></div></div>
-        <div class="panel"><div class="panel-h"><span class="panel-t">${t('sw_secondary')}</span></div><div class="panel-b">
-            <div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${t('software')}</div>
+        <div class="panel"><div class="panel-h"><span class="panel-t">${t('software')}</span></div><div class="panel-b">
             ${sw.length?sw.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:11px;color:var(--text2);flex:1">${esc(k)}</span><div class="mbar" style="width:110px"><div class="mbar-track"><div class="mbar-fill" style="width:${pct(v,sw[0][1])}%;background:${C[(i+3)%C.length]}"></div></div><div class="mbar-val">${v}</div></div></div>`).join(''):`<div style="color:var(--text3);font-size:11px">${t('no_data')}</div>`}
-            <div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px">${t('secondary_hw')}</div>
-            ${hw2.length?hw2.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:11px;color:var(--text2);flex:1">${esc(k)}</span><div class="mbar" style="width:110px"><div class="mbar-track"><div class="mbar-fill" style="width:${pct(v,hw2[0][1])}%;background:${C[(i+7)%C.length]}"></div></div><div class="mbar-val">${v}</div></div></div>`).join(''):`<div style="color:var(--text3);font-size:11px">${t('no_data')}</div>`}
         </div></div>
     </div>
     <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">${t('hw_scenario_matrix')}</span></div><div class="panel-b np"><div class="tscroll"><table class="tbl"><thead><tr><th>${t('hardware')}</th>${scenarios.map(s=>`<th class="n">${s}</th>`).join('')}<th class="n">${t('total')}</th></tr></thead>
