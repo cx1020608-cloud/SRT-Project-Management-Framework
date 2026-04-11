@@ -729,6 +729,7 @@ function vPipeline(){
 // ============================================================
 function vPerformance(){
     const T=DATA.length;
+    const cQr=Math.ceil((new Date().getMonth()+1)/3);
     const years=[...new Set(DATA.map(d=>d.year).filter(Boolean))].sort();
     const scenarios=[...new Set(DATA.map(d=>d.scenario).filter(Boolean))].sort();
     const channels=topN(grp(DATA,'channel'),15);
@@ -752,8 +753,8 @@ function vPerformance(){
             ${inst.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:11px;color:var(--text2);flex:1">${esc(k)}</span><span style="font-size:12px;font-weight:700;color:${C[i%C.length]}">${v}</span></div>`).join('')}</div>
         </div></div>
     </div>
-    <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">${t('channel_year_matrix')} (Top 15)</span></div><div class="panel-b np"><div class="tscroll"><table class="tbl"><thead><tr><th>${t('channel')}</th>${years.map(y=>`<th class="n">${y}</th>`).join('')}<th class="n">${t('total')}</th><th style="width:100px">${t('trend')}</th></tr></thead>
-    <tbody>${channels.map(([ch,tt])=>{const byY=years.map(y=>cnt(DATA,d=>d.channel===ch&&d.year===y));const mx=Math.max(...byY,1);return`<tr onclick="goFilter('channel','${esc(ch)}')"><td>${esc(ch)}</td>${byY.map(v=>`<td class="n">${v||'-'}</td>`).join('')}<td class="n" style="font-weight:700">${tt}</td><td><div style="display:flex;align-items:flex-end;gap:2px;height:18px">${byY.map(v=>`<div style="flex:1;height:${Math.max(pct(v,mx)*.18,1)}px;background:var(--primary);border-radius:1px"></div>`).join('')}</div></td></tr>`}).join('')}</tbody></table></div></div></div>
+    <div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">${t('channel_year_matrix')} (Top 15) — Q1-Q${cQr} ${t('yoy')}</span></div><div class="panel-b np"><div class="tscroll"><table class="tbl"><thead><tr><th>${t('channel')}</th>${years.map(y=>`<th class="n">${y}<div style="font-size:8px;color:var(--text3)">Q1-Q${cQr}</div></th>`).join('')}<th class="n">${t('total')}</th><th class="n">${t('yoy')}</th><th style="width:100px">${t('trend')}</th></tr></thead>
+    <tbody>${channels.map(([ch,tt])=>{const byY=years.map(y=>cnt(DATA,d=>d.channel===ch&&d.year===y&&d.quarter<=cQr));const mx=Math.max(...byY,1);const cur=byY[byY.length-1]||0,prev=byY[byY.length-2]||0;const chYoy=prev?Math.round((cur-prev)/prev*100):cur>0?100:0;return`<tr onclick="goFilter('channel','${esc(ch)}')"><td>${esc(ch)}</td>${byY.map(v=>`<td class="n">${v||'-'}</td>`).join('')}<td class="n" style="font-weight:700">${tt}</td><td class="n"><span class="kpi-trend ${chYoy>=0?'up':'down'}" style="font-size:11px">${chYoy>=0?'↑':'↓'}${Math.abs(chYoy)}%</span></td><td><div style="display:flex;align-items:flex-end;gap:2px;height:18px">${byY.map(v=>`<div style="flex:1;height:${Math.max(pct(v,mx)*.18,1)}px;background:var(--primary);border-radius:1px"></div>`).join('')}</div></td></tr>`}).join('')}</tbody></table></div></div></div>
     ${loss.length?`<div class="panel" style="margin-top:12px"><div class="panel-h"><span class="panel-t">${t('loss_reasons')}</span><span class="panel-badge">${DATA.filter(d=>d.lossReason).length} ${t('records')}</span></div><div class="panel-b"><div class="hbar">${loss.map(([k,v],i)=>`<div class="hbar-r"><div class="hbar-l">${esc(k)}</div><div class="hbar-t"><div class="hbar-f" style="width:${pct(v,loss[0][1])}%;background:${C[i%C.length]}"><span>${v}</span></div></div></div>`).join('')}</div></div></div>`:''}`;
 }
 
@@ -814,11 +815,40 @@ function mkPgBtns(c,t){let h='';const s=Math.max(1,c-2),e=Math.min(t,c+2);for(le
 // ============================================================
 function vChannels(){
     const T=DATA.length;
+    const cQr=Math.ceil((new Date().getMonth()+1)/3);
+    const cYr=new Date().getFullYear();
     const channels=topN(grp(DATA,'channel'),20);
     const sales=topN(grp(DATA,d=>d.sales?d.sales.replace(/\s+/g,''):null),15);
     const se=topN(grp(DATA,d=>d.salesEngineer?d.salesEngineer.replace(/\s+/g,''):null),10);
     const regions=topN(grp(DATA,'region'),15);
     const chD=channels.map(([ch,tt])=>{const cd=DATA.filter(d=>d.channel===ch);const w=cnt(cd,d=>['10-项目移交','06-订单签订'].includes(d.progress));const a=cnt(cd,d=>!['10-项目移交','06-订单签订','08-项目取消','09-丢标输单','07-暂停跟进'].includes(d.progress));const sc=[...new Set(cd.map(d=>d.scenario).filter(Boolean))];return{ch,t:tt,w,a,r:pct(w,tt),sc}});
+
+    // Top 3 channel detailed analysis
+    const top3=channels.slice(0,3).map(([ch])=>{
+        const cd=DATA.filter(d=>d.channel===ch);
+        const won=cnt(cd,d=>['10-项目移交','06-订单签订'].includes(d.progress));
+        const lost=cnt(cd,d=>d.progress==='09-丢标输单');
+        const active=cnt(cd,d=>!['10-项目移交','06-订单签订','08-项目取消','09-丢标输单','07-暂停跟进'].includes(d.progress));
+        const cancelled=cnt(cd,d=>d.progress==='08-项目取消');
+        const wr=cd.length?pct(won,cd.length):0;
+        // Scenario breakdown
+        const scGrp=grp(cd,'scenario');
+        const scEntries=Object.entries(scGrp).sort((a,b)=>b[1]-a[1]);
+        // Progress breakdown
+        const prGrp={};PROGRESS.forEach(p=>{const c=cnt(cd,d=>d.progress===p);if(c)prGrp[p]=c});
+        // Yearly Q1-Qn trend
+        const yrs=[...new Set(cd.map(d=>d.year).filter(Boolean))].sort();
+        const yTrend=yrs.map(y=>({y,q:cnt(cd,d=>d.year===y&&d.quarter<=cQr),t:cnt(cd,d=>d.year===y)}));
+        const curQ=yTrend.find(r=>r.y===cYr),prevQ=yTrend.find(r=>r.y===cYr-1);
+        const yoy=prevQ&&prevQ.q?Math.round(((curQ?curQ.q:0)-prevQ.q)/prevQ.q*100):(curQ&&curQ.q>0?100:0);
+        // Top customers
+        const custs=topN(grp(cd,'endUser'),5);
+        // Customization rate
+        const cuR=cd.length?pct(cnt(cd,d=>d.customization==='〇'),cd.length):0;
+        // Hardware breakdown
+        const hwGrp=topN(grp(cd.filter(d=>d.hardware1),'hardware1'),5);
+        return{ch,t:cd.length,won,lost,active,cancelled,wr,scEntries,prGrp,yTrend,yoy,custs,cuR,hwGrp};
+    });
 
     return`
     <div class="grid g2">
@@ -826,6 +856,29 @@ function vChannels(){
         <tbody>${chD.map((r,i)=>`<tr onclick="goFilter('channel','${esc(r.ch)}')"><td class="dim">${i+1}</td><td style="font-weight:600">${esc(r.ch)}</td><td class="n">${r.t}</td><td class="n" style="color:var(--green)">${r.w}</td><td class="n" style="color:var(--blue)">${r.a}</td><td class="n"><span class="badge ${r.r>=50?'b-green':r.r>=30?'b-orange':'b-red'}">${r.r}%</span></td><td>${r.sc.map(s=>`<span class="badge b-accent" style="margin-right:2px;font-size:9px">${s}</span>`).join('')}</td></tr>`).join('')}</tbody></table></div></div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">${t('sales_team')}</span></div><div class="panel-b"><div class="hbar">${sales.map(([k,v],i)=>`<div class="hbar-r"><div class="hbar-l">${esc(k)}</div><div class="hbar-t"><div class="hbar-f" style="width:${pct(v,sales[0][1])}%;background:${C[i%C.length]}"><span>${v}</span></div></div><div class="hbar-e">${pct(v,T)}%</div></div>`).join('')}</div></div></div>
     </div>
+
+    <div class="grid g3" style="margin-top:12px">${top3.map((r,idx)=>{
+        const prEntries=Object.entries(r.prGrp);
+        const prMax=Math.max(...prEntries.map(([,v])=>v),1);
+        return`<div class="panel"><div class="panel-h"><span class="panel-t" style="display:flex;align-items:center;gap:6px"><span class="badge" style="background:${C[idx]};color:#fff;font-size:11px">TOP ${idx+1}</span>${esc(r.ch)}</span><span class="panel-badge">${r.t} ${t('projects')}</span></div><div class="panel-b" style="font-size:11px">
+            <div class="kpi-row c4" style="margin-bottom:10px">
+                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--green)">${r.won}</div><div style="font-size:9px;color:var(--text3)">${t('won')}</div></div>
+                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--blue)">${r.active}</div><div style="font-size:9px;color:var(--text3)">${t('active')}</div></div>
+                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--red)">${r.lost+r.cancelled}</div><div style="font-size:9px;color:var(--text3)">${t('cancelled_lost')}</div></div>
+                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:${r.wr>=50?'var(--green)':r.wr>=30?'var(--orange)':'var(--red)'}">${r.wr}%</div><div style="font-size:9px;color:var(--text3)">${t('win_rate')}</div></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px"><span class="kpi-trend ${r.yoy>=0?'up':'down'}" style="font-size:10px">${r.yoy>=0?'↑':'↓'}${Math.abs(r.yoy)}% Q1-Q${cQr} ${t('yoy')}</span><span style="font-size:9px;color:var(--text3)">${t('customized')}: ${r.cuR}%</span></div>
+            <div style="margin-bottom:10px"><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:4px">${t('scenario')}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">${r.scEntries.map(([s,v])=>`<span class="badge" style="background:${SC_C[s]||'var(--glass3)'};color:#fff">${s} ${v}</span>`).join('')}</div></div>
+            <div style="margin-bottom:10px"><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:4px">${t('progress')}</div>
+            ${prEntries.map(([p,v])=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="font-size:10px;color:var(--text3);width:30px;text-align:right">${PS(p)}</span><div style="flex:1;height:12px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct(v,prMax)}%;background:${P_COLOR[p]};border-radius:3px"></div></div><span style="font-size:10px;font-weight:600;width:20px">${v}</span></div>`).join('')}</div>
+            <div style="margin-bottom:10px"><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:4px">${t('yearly_pipeline_trend')} (Q1-Q${cQr})</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:40px">${r.yTrend.map(yr=>{const mx=Math.max(...r.yTrend.map(y=>y.q),1);return`<div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-size:8px;font-weight:700;color:var(--text2)">${yr.q}</div><div style="width:100%;height:${Math.max(pct(yr.q,mx)*.3,2)}px;background:var(--primary);border-radius:2px"></div><div style="font-size:7px;color:var(--text3);margin-top:2px">${yr.y}</div></div>`}).join('')}</div></div>
+            <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Top ${t('end_user')}</div>
+            ${r.custs.map(([k,v])=>`<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px" title="${esc(k)}">${esc(k)}</span><span style="font-weight:700;color:var(--text)">${v}</span></div>`).join('')}</div>
+        </div></div>`}).join('')}
+    </div>
+
     <div class="grid g2" style="margin-top:12px">
         <div class="panel"><div class="panel-h"><span class="panel-t">${t('sales_engineers')}</span></div><div class="panel-b"><div class="hbar">${se.map(([k,v],i)=>`<div class="hbar-r"><div class="hbar-l">${esc(k)}</div><div class="hbar-t"><div class="hbar-f" style="width:${pct(v,se[0][1])}%;background:${C[(i+5)%C.length]}"><span>${v}</span></div></div><div class="hbar-e">${pct(v,T)}%</div></div>`).join('')}</div></div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">${t('region_distribution')}</span></div><div class="panel-b"><div class="hbar">${regions.map(([k,v],i)=>`<div class="hbar-r"><div class="hbar-l">${esc(k)}</div><div class="hbar-t"><div class="hbar-f" style="width:${pct(v,regions[0][1])}%;background:${C[(i+2)%C.length]}"><span>${v}</span></div></div><div class="hbar-e">${pct(v,T)}%</div></div>`).join('')}</div></div></div>
