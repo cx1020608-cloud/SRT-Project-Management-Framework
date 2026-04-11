@@ -230,7 +230,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
 .dl-p{font-size:9.5px;color:var(--text3);min-width:28px;text-align:right}
 
 /* Gauge */
-.gauge-w{display:flex;justify-content:center;align-items:center}
+.gauge-w{display:flex;flex-direction:column;align-items:center}
 .gauge-fill{animation:gaugeIn 1s ease-out both}
 @keyframes gaugeIn{from{stroke-dasharray:0 9999}}
 

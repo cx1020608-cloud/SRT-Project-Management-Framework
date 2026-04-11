@@ -613,7 +613,7 @@ function renderView(){
         case'channelroi':c.innerHTML=vChannelROI();break;
         case'pmfit':c.innerHTML=vPMFit();break;
         case'decisions':c.innerHTML=vDecisions();break;
-        case'news':c.innerHTML=vNews();break;
+        case'changelog':c.innerHTML=vChangelog();break;
         case'weekly':c.innerHTML=vWeekly();break;
     }
     DATA=fullData;
@@ -942,12 +942,19 @@ function mkDonut(entries,sz){
     return`<div class="donut-w"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" class="donut-svg"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${sw}"/>${arcs.join('')}<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="${sz*.13}" font-weight="800" fill="var(--text)">${T}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="${sz*.07}" fill="var(--text3)">total</text></svg><div class="donut-legend">${entries.map(([k,v],i)=>`<div class="dl-i"><div class="dl-d" style="background:${C[i%C.length]}"></div><span class="dl-n">${esc(k)}</span><span class="dl-v">${v}</span><span class="dl-p">${pct(v,T)}%</span></div>`).join('')}</div></div>`;
 }
 function mkGauge(val,label,color,sz){
-    sz=sz||100;const cx=sz/2,cy=sz/2+4,r=sz/2-10,sw=sz*.13;
-    const circ=Math.PI*r;const fill=Math.min(val,100)/100*circ;
+    sz=sz||80;const cx=sz/2,cy=sz/2,r=sz/2-6,sw=5;
+    const circ=2*Math.PI*r;const fill=Math.min(val,100)/100*circ;const gap=circ-fill;
     const autoC=color||(val>=50?'var(--green)':val>=30?'var(--orange)':'var(--red)');
-    return`<div class="gauge-w"><svg width="${sz}" height="${sz*.62}" viewBox="0 0 ${sz} ${sz*.62}" class="gauge-svg"><path d="M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="${sw}" stroke-linecap="round"/><path d="M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${autoC}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${fill} ${circ}" class="gauge-fill" style="filter:drop-shadow(0 0 6px ${autoC}66)"/><text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="${sz*.22}" font-weight="800" fill="var(--text)">${val}%</text><text x="${cx}" y="${cy+sz*.12}" text-anchor="middle" font-size="${sz*.09}" fill="var(--text3)">${label}</text></svg></div>`;
+    return`<div class="gauge-w"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${sw}"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${autoC}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${fill} ${gap}" stroke-dashoffset="${circ*.25}" transform="rotate(-90 ${cx} ${cy})" class="gauge-fill" style="filter:drop-shadow(0 0 4px ${autoC}44)"/><text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="${sz*.24}" font-weight="800" fill="var(--text)">${val}%</text></svg><div style="font-size:${sz*.1}px;color:var(--text3);text-align:center;margin-top:2px">${label}</div></div>`;
 }
 function heatC(v,mx){if(!v)return'transparent';const a=Math.round(Math.min(v/mx,1)*.5*255).toString(16).padStart(2,'0');return`#7c6aef${a}`}
+
+function vChangelog(){
+    const lang=localStorage.getItem('lang')||'zh',isZh=lang==='zh';
+    const l=(zh,ja)=>isZh?zh:ja;
+    if(typeof CHANGELOG==='undefined')return`<div class="panel"><div class="panel-b" style="text-align:center;padding:40px;color:var(--text3)">${l('暂无更新日志','更新ログなし')}</div></div>`;
+    return`<div class="view-wrap"><div class="view-inner">${buildChangelogSection(l)}</div></div>`;
+}
 
 // ============================================================
 // DETAIL

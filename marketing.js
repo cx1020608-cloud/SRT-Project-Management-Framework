@@ -650,9 +650,9 @@ function vDecisions(){
 }
 
 // ============================================================
-// vNews — Industry News (last 15 days)
+// vNews — REMOVED
 // ============================================================
-function vNews(){
+function _vNewsRemoved(){
     const lang = localStorage.getItem('lang')||'zh';
     const newsData = [
         {
@@ -1237,10 +1237,6 @@ function vWeekly(){
         </div>
 
     </div></div>
-
-    <!-- Update Log Section -->
-    ${typeof CHANGELOG!=='undefined'?buildChangelogSection(l):''}
-
     `;
 }
 
