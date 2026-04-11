@@ -654,9 +654,9 @@ function vOverview(){
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('total_projects')}</span><span class="kpi-trend ${yoy>=0?'up':'down'}">${yoy>=0?'↑':'↓'}${Math.abs(yoy)}% ${t('yoy')}</span></div><div class="kpi-val">${T}</div><div class="kpi-sub">${tyq.length} ${yr} Q1-Q${qr}${t('projects_in')}</div></div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('active_pipeline')}</span></div><div class="kpi-val" style="color:var(--blue)">${ac}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${pct(ac,T)}%;background:var(--blue)"></div></div><div class="kpi-sub">${pct(ac,T)}% ${t('of_total')}</div></div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('transferred')}</span></div><div class="kpi-val" style="color:var(--accent)">${tr}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${pct(tr,T)}%;background:var(--accent)"></div></div><div class="kpi-sub">${pct(tr,T)}% ${t('completion')}</div></div>
-        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('win_rate')}</span></div><div class="kpi-val" style="color:var(--green)">${wr}%</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${wr}%;background:var(--green)"></div></div><div class="kpi-sub">${tr+sg} ${t('won_total')} ${T}</div></div>
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('win_rate')}</span></div>${mkGauge(wr,`${tr+sg} / ${T}`,null,90)}</div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('cancelled_lost')}</span></div><div class="kpi-val" style="color:var(--red)">${ca+lo}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${pct(ca+lo,T)}%;background:var(--red)"></div></div><div class="kpi-sub">${ca} ${t('cancelled')}, ${lo} ${t('lost')}</div></div>
-        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('customized')}</span></div><div class="kpi-val" style="color:var(--primary2)">${cr}%</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${cr}%;background:var(--primary)"></div></div><div class="kpi-sub">${cu} ${t('of')} ${T} ${t('of_projects')}</div></div>
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('customized')}</span></div>${mkGauge(cr,`${cu} / ${T}`,'var(--primary)',90)}</div>
     </div>
     <div class="grid g32">
         <div class="panel"><div class="panel-h"><span class="panel-t">${t('pipeline_stage')}</span><span class="panel-badge">${T} ${t('projects')}</span></div><div class="panel-b">
@@ -740,7 +740,16 @@ function vPerformance(){
     const loss=topN(grp(DATA.filter(d=>d.lossReason),'lossReason'),8);
     const sPerf=scenarios.map(s=>{const sd=DATA.filter(d=>d.scenario===s);const w=cnt(sd,d=>['10-项目移交','06-订单签订'].includes(d.progress));return{s,t:sd.length,w,r:sd.length?pct(w,sd.length):0}});
 
+    const overallWr=T?pct(cnt(DATA,d=>['10-项目移交','06-订单签订'].includes(d.progress)),T):0;
+    const activePct=T?pct(cnt(DATA,d=>!['10-项目移交','06-订单签订','08-项目取消','09-丢标输单','07-暂停跟进'].includes(d.progress)),T):0;
+    const trPct=T?pct(cnt(DATA,d=>d.progress==='10-项目移交'),T):0;
     return`
+    <div class="kpi-row c4" style="margin-bottom:12px">
+        <div class="kpi">${mkGauge(overallWr,t('win_rate'),null,110)}</div>
+        <div class="kpi">${mkGauge(activePct,t('active_pipeline'),'var(--blue)',110)}</div>
+        <div class="kpi">${mkGauge(trPct,t('transferred'),'var(--accent)',110)}</div>
+        <div class="kpi">${mkGauge(T?pct(cnt(DATA,d=>d.customization==='〇'),T):0,t('customized'),'var(--primary)',110)}</div>
+    </div>
     <div class="panel" style="margin-bottom:12px"><div class="panel-h"><span class="panel-t">${t('yearly_comparison')}</span></div><div class="panel-b np"><table class="tbl"><thead><tr><th>${t('year')}</th><th class="n">${t('total')}</th><th class="n">${t('won')}</th><th class="n">${t('lost')}</th><th class="n">${t('active')}</th><th class="n">${t('win_rate')}</th><th style="width:180px">${t('distribution')}</th></tr></thead>
     <tbody>${yWL.map(r=>`<tr><td style="font-weight:700">${r.y}</td><td class="n">${r.t}</td><td class="n" style="color:var(--green)">${r.w}</td><td class="n" style="color:var(--red)">${r.l}</td><td class="n" style="color:var(--blue)">${r.a}</td><td class="n"><span class="badge ${r.r>=50?'b-green':r.r>=30?'b-orange':'b-red'}">${r.r}%</span></td><td><div class="sbar">${r.w?`<div class="sbar-s" style="width:${pct(r.w,r.t)}%;background:var(--green)"></div>`:''}${r.a?`<div class="sbar-s" style="width:${pct(r.a,r.t)}%;background:var(--blue)"></div>`:''}${r.l?`<div class="sbar-s" style="width:${pct(r.l,r.t)}%;background:var(--red)"></div>`:''}</div></td></tr>`).join('')}</tbody></table></div></div>
     <div class="grid g2">
@@ -861,11 +870,13 @@ function vChannels(){
         const prEntries=Object.entries(r.prGrp);
         const prMax=Math.max(...prEntries.map(([,v])=>v),1);
         return`<div class="panel"><div class="panel-h"><span class="panel-t" style="display:flex;align-items:center;gap:6px"><span class="badge" style="background:${C[idx]};color:#fff;font-size:11px">TOP ${idx+1}</span>${esc(r.ch)}</span><span class="panel-badge">${r.t} ${t('projects')}</span></div><div class="panel-b" style="font-size:11px">
-            <div class="kpi-row c4" style="margin-bottom:10px">
-                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--green)">${r.won}</div><div style="font-size:9px;color:var(--text3)">${t('won')}</div></div>
-                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--blue)">${r.active}</div><div style="font-size:9px;color:var(--text3)">${t('active')}</div></div>
-                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--red)">${r.lost+r.cancelled}</div><div style="font-size:9px;color:var(--text3)">${t('cancelled_lost')}</div></div>
-                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:${r.wr>=50?'var(--green)':r.wr>=30?'var(--orange)':'var(--red)'}">${r.wr}%</div><div style="font-size:9px;color:var(--text3)">${t('win_rate')}</div></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="flex:1">${mkGauge(r.wr,t('win_rate'),null,80)}</div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--text3)">${t('won')}</span><span style="font-size:14px;font-weight:800;color:var(--green)">${r.won}</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--text3)">${t('active')}</span><span style="font-size:14px;font-weight:800;color:var(--blue)">${r.active}</span></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--text3)">${t('cancelled_lost')}</span><span style="font-size:14px;font-weight:800;color:var(--red)">${r.lost+r.cancelled}</span></div>
+                </div>
             </div>
             <div style="display:flex;gap:6px;margin-bottom:8px"><span class="kpi-trend ${r.yoy>=0?'up':'down'}" style="font-size:10px">${r.yoy>=0?'↑':'↓'}${Math.abs(r.yoy)}% Q1-Q${cQr} ${t('yoy')}</span><span style="font-size:9px;color:var(--text3)">${t('customized')}: ${r.cuR}%</span></div>
             <div style="margin-bottom:10px"><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:4px">${t('scenario')}</div>
@@ -920,11 +931,21 @@ function vHardware(){
 // SHARED
 // ============================================================
 function mkDonut(entries,sz){
-    const r=sz/2,ir=r*.55,cx=r,cy=r;
+    const cx=sz/2,cy=sz/2,r=sz/2-8,sw=sz*.16;
     const T=entries.reduce((s,[,v])=>s+v,0);
-    let cum=0;
-    const paths=entries.map(([k,v],i)=>{const a=(v/T)*360;const s=cum;cum+=a;const p1=pXY(cx,cy,r-4,s);const p2=pXY(cx,cy,r-4,s+a-.5);return`<path d="M${cx},${cy} L${p1.x},${p1.y} A${r-4},${r-4} 0 ${a>180?1:0},1 ${p2.x},${p2.y} Z" fill="${C[i%C.length]}" style="cursor:pointer"><title>${k}: ${v} (${pct(v,T)}%)</title></path>`});
-    return`<div class="donut-w"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">${paths.join('')}<circle cx="${cx}" cy="${cy}" r="${ir}" fill="rgba(10,14,26,.6)"/><text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">${T}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="8.5" fill="var(--text3)">total</text></svg><div class="donut-legend">${entries.map(([k,v],i)=>`<div class="dl-i"><div class="dl-d" style="background:${C[i%C.length]}"></div><span class="dl-n">${esc(k)}</span><span class="dl-v">${v}</span><span class="dl-p">${pct(v,T)}%</span></div>`).join('')}</div></div>`;
+    const circ=2*Math.PI*r;
+    const gap=entries.length>1?3:0;
+    const totalGap=gap*entries.length;
+    const usable=circ-totalGap;
+    let off=0;
+    const arcs=entries.map(([k,v],i)=>{const seg=(v/T)*usable;const dashOff=-(off+totalGap*i/entries.length);off+=seg;const col=C[i%C.length];return`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-dasharray="${seg} ${circ-seg}" stroke-dashoffset="${dashOff}" stroke-linecap="round" class="donut-seg" style="cursor:pointer;filter:drop-shadow(0 1px 3px ${col}44)"><title>${k}: ${v} (${pct(v,T)}%)</title></circle>`});
+    return`<div class="donut-w"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" class="donut-svg"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${sw}"/>${arcs.join('')}<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="${sz*.13}" font-weight="800" fill="var(--text)">${T}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="${sz*.07}" fill="var(--text3)">total</text></svg><div class="donut-legend">${entries.map(([k,v],i)=>`<div class="dl-i"><div class="dl-d" style="background:${C[i%C.length]}"></div><span class="dl-n">${esc(k)}</span><span class="dl-v">${v}</span><span class="dl-p">${pct(v,T)}%</span></div>`).join('')}</div></div>`;
+}
+function mkGauge(val,label,color,sz){
+    sz=sz||100;const cx=sz/2,cy=sz/2+4,r=sz/2-10,sw=sz*.13;
+    const circ=Math.PI*r;const fill=Math.min(val,100)/100*circ;
+    const autoC=color||(val>=50?'var(--green)':val>=30?'var(--orange)':'var(--red)');
+    return`<div class="gauge-w"><svg width="${sz}" height="${sz*.62}" viewBox="0 0 ${sz} ${sz*.62}" class="gauge-svg"><path d="M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="${sw}" stroke-linecap="round"/><path d="M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${autoC}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${fill} ${circ}" class="gauge-fill" style="filter:drop-shadow(0 0 6px ${autoC}66)"/><text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="${sz*.22}" font-weight="800" fill="var(--text)">${val}%</text><text x="${cx}" y="${cy+sz*.12}" text-anchor="middle" font-size="${sz*.09}" fill="var(--text3)">${label}</text></svg></div>`;
 }
 function heatC(v,mx){if(!v)return'transparent';const a=Math.round(Math.min(v/mx,1)*.5*255).toString(16).padStart(2,'0');return`#7c6aef${a}`}
 

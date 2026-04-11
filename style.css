@@ -219,12 +219,20 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
 
 /* Donut */
 .donut-w{display:flex;align-items:center;gap:16px}
+.donut-svg{transform:rotate(-90deg)}
+.donut-seg{animation:donutIn .8s ease-out both}
+@keyframes donutIn{from{stroke-dasharray:0 9999;opacity:0}to{opacity:1}}
 .donut-legend{display:flex;flex-direction:column;gap:4px}
 .dl-i{display:flex;align-items:center;gap:6px;font-size:10.5px;cursor:pointer;padding:2px 3px;border-radius:3px;transition:background .1s}
-.dl-i:hover{background:rgba(0,0,0,.03)}
+.dl-i:hover{background:rgba(255,255,255,.06)}
 .dl-d{width:7px;height:7px;border-radius:2px;flex-shrink:0}
 .dl-n{color:var(--text2);flex:1}.dl-v{font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
 .dl-p{font-size:9.5px;color:var(--text3);min-width:28px;text-align:right}
+
+/* Gauge */
+.gauge-w{display:flex;justify-content:center;align-items:center}
+.gauge-fill{animation:gaugeIn 1s ease-out both}
+@keyframes gaugeIn{from{stroke-dasharray:0 9999}}
 
 /* Filters & Paging */
 .fbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
