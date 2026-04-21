@@ -654,9 +654,9 @@ function vOverview(){
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('total_projects')}</span><span class="kpi-trend ${yoy>=0?'up':'down'}">${yoy>=0?'↑':'↓'}${Math.abs(yoy)}% ${t('yoy')}</span></div><div class="kpi-val">${T}</div><div class="kpi-sub">${tyq.length} ${yr} Q1-Q${qr}${t('projects_in')}</div></div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('active_pipeline')}</span></div><div class="kpi-val" style="color:var(--blue)">${ac}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${pct(ac,T)}%;background:var(--blue)"></div></div><div class="kpi-sub">${pct(ac,T)}% ${t('of_total')}</div></div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('transferred')}</span></div><div class="kpi-val" style="color:var(--accent)">${tr}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${pct(tr,T)}%;background:var(--accent)"></div></div><div class="kpi-sub">${pct(tr,T)}% ${t('completion')}</div></div>
-        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('win_rate')}</span></div>${mkGauge(wr,`${tr+sg} / ${T}`,null,90)}</div>
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('win_rate')}</span></div><div class="kpi-val" style="color:var(--green)">${wr}%</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${wr}%;background:var(--green)"></div></div><div class="kpi-sub">${tr+sg} ${t('won_total')} ${T}</div></div>
         <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('cancelled_lost')}</span></div><div class="kpi-val" style="color:var(--red)">${ca+lo}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${pct(ca+lo,T)}%;background:var(--red)"></div></div><div class="kpi-sub">${ca} ${t('cancelled')}, ${lo} ${t('lost')}</div></div>
-        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('customized')}</span></div>${mkGauge(cr,`${cu} / ${T}`,'var(--primary)',90)}</div>
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">${t('customized')}</span></div><div class="kpi-val" style="color:var(--primary2)">${cr}%</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${cr}%;background:var(--primary)"></div></div><div class="kpi-sub">${cu} ${t('of')} ${T} ${t('of_projects')}</div></div>
     </div>
     <div class="grid g32">
         <div class="panel"><div class="panel-h"><span class="panel-t">${t('pipeline_stage')}</span><span class="panel-badge">${T} ${t('projects')}</span></div><div class="panel-b">
@@ -664,7 +664,7 @@ function vOverview(){
             <div style="margin-top:12px"><div class="sbar">${PROGRESS.map(p=>`<div class="sbar-s" style="width:${pct(pC[p],T)}%;background:${P_COLOR[p]}" title="${PS(p)}: ${pC[p]}"></div>`).join('')}</div></div>
         </div></div>
         <div class="panel"><div class="panel-h"><span class="panel-t">${t('scenario_quarter')}</span></div><div class="panel-b">
-            ${mkDonut(sE,125)}
+            ${mkDonut(sE,140,SC_C)}
             <div style="margin-top:14px"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${t('quarterly_heatmap')}</div>
             <table class="tbl" style="font-size:11px"><thead><tr><th>${t('year')}</th><th class="n">Q1</th><th class="n">Q2</th><th class="n">Q3</th><th class="n">Q4</th><th class="n">${t('total')}</th></tr></thead>
             <tbody>${years.map(y=>{const tt=Object.values(qD[y]).reduce((a,b)=>a+b,0);return`<tr><td style="font-weight:600">${y}</td>${[1,2,3,4].map(q=>`<td class="n"><span class="hcell" style="background:${heatC(qD[y][q],pM)}">${qD[y][q]}</span></td>`).join('')}<td class="n" style="font-weight:700">${tt}</td></tr>`}).join('')}</tbody></table>
@@ -930,16 +930,15 @@ function vHardware(){
 // ============================================================
 // SHARED
 // ============================================================
-function mkDonut(entries,sz){
-    const cx=sz/2,cy=sz/2,r=sz/2-8,sw=sz*.16;
+function mkDonut(entries,sz,colorMap){
+    const cx=sz/2,cy=sz/2,r=sz/2-8,sw=sz*.18;
     const T=entries.reduce((s,[,v])=>s+v,0);
     const circ=2*Math.PI*r;
-    const gap=entries.length>1?3:0;
-    const totalGap=gap*entries.length;
-    const usable=circ-totalGap;
+    const gap=entries.length>1?2:0;
+    const getCol=(k,i)=>colorMap&&colorMap[k]?colorMap[k]:C[i%C.length];
     let off=0;
-    const arcs=entries.map(([k,v],i)=>{const seg=(v/T)*usable;const dashOff=-(off+totalGap*i/entries.length);off+=seg;const col=C[i%C.length];return`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-dasharray="${seg} ${circ-seg}" stroke-dashoffset="${dashOff}" stroke-linecap="round" class="donut-seg" style="cursor:pointer;filter:drop-shadow(0 1px 3px ${col}44)"><title>${k}: ${v} (${pct(v,T)}%)</title></circle>`});
-    return`<div class="donut-w"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" class="donut-svg"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${sw}"/>${arcs.join('')}<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="${sz*.13}" font-weight="800" fill="var(--text)">${T}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="${sz*.07}" fill="var(--text3)">total</text></svg><div class="donut-legend">${entries.map(([k,v],i)=>`<div class="dl-i"><div class="dl-d" style="background:${C[i%C.length]}"></div><span class="dl-n">${esc(k)}</span><span class="dl-v">${v}</span><span class="dl-p">${pct(v,T)}%</span></div>`).join('')}</div></div>`;
+    const arcs=entries.map(([k,v],i)=>{const seg=(v/T)*circ-gap;const dashOff=-off;off+=(v/T)*circ;const col=getCol(k,i);return`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-dasharray="${Math.max(seg,0)} ${circ}" stroke-dashoffset="${dashOff}" class="donut-seg" style="cursor:pointer;transform:rotate(-90deg);transform-origin:${cx}px ${cy}px;transition:stroke-width .2s"><title>${k}: ${v} (${pct(v,T)}%)</title></circle>`});
+    return`<div class="donut-w"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" class="donut-svg">${arcs.join('')}<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="${sz*.17}" font-weight="800" fill="var(--text)" dominant-baseline="central">${T}</text><text x="${cx}" y="${cy+sz*.14}" text-anchor="middle" font-size="${sz*.07}" fill="var(--text3)" letter-spacing="1">TOTAL</text></svg><div class="donut-legend">${entries.map(([k,v],i)=>`<div class="dl-i"><div class="dl-d" style="background:${getCol(k,i)}"></div><span class="dl-n">${esc(k)}</span><span class="dl-v">${v}</span><span class="dl-p">${pct(v,T)}%</span></div>`).join('')}</div></div>`;
 }
 function mkGauge(val,label,color,sz){
     sz=sz||80;const cx=sz/2,cy=sz/2,r=sz/2-10,sw=sz*.18;
