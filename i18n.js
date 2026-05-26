@@ -28,6 +28,7 @@ const I18N = {
     nav_funnel: 'Pipeline & 人效',
     nav_channelroi: '渠道结构',
     nav_pmfit: '产品 & 售前',
+    nav_distribution: '地区 & 行业分布',
     search_placeholder: '搜索项目、CRM、客户...',
 
     // Marketing
@@ -376,6 +377,7 @@ const I18N = {
     nav_funnel: 'Pipeline & 人効',
     nav_channelroi: 'チャンネル構造',
     nav_pmfit: '製品 & プリセールス',
+    nav_distribution: '地域 & 業界分布',
 
     mkt_market_penetration: '市場浸透分析',
     mkt_new_vs_repeat: '新規 vs リピート顧客',

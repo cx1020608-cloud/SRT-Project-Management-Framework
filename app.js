@@ -614,6 +614,7 @@ function renderView(){
         case'pmfit':c.innerHTML=vPMFit();break;
         case'decisions':c.innerHTML=vDecisions();break;
         case'changelog':c.innerHTML=vChangelog();break;
+        case'distribution':c.innerHTML=vDistribution();break;
         case'weekly':c.innerHTML=vWeekly();break;
     }
     DATA=fullData;

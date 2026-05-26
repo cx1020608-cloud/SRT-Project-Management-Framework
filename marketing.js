@@ -1323,3 +1323,127 @@ function buildChangelogSection(l){
     html+=`</div>`;
     return html;
 }
+
+// ════════════════════════════════════════════════════════════
+// VIEW: 地域・行業分布 (Distribution)
+// ════════════════════════════════════════════════════════════
+
+// 8 Japan regions → prefectures
+const JP_REGIONS={
+    '北海道':['北海道'],
+    '東北':['青森','岩手','宮城','秋田','山形','福島'],
+    '関東':['茨城','栃木','群馬','埼玉','千葉','東京','神奈川'],
+    '中部':['新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知'],
+    '関西':['三重','滋賀','京都','大阪','兵庫','奈良','和歌山'],
+    '中国':['鳥取','島根','岡山','広島','山口'],
+    '四国':['徳島','香川','愛媛','高知'],
+    '九州':['福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄']
+};
+const JP_REGION_COLOR={'北海道':'#60a5fa','東北':'#34d399','関東':'#7c6aef','中部':'#f472b6','関西':'#fbbf24','中国':'#22d3ee','四国':'#a78bfa','九州':'#f87171','その他':'#94a3b8'};
+const JP_REGION_ORDER=['北海道','東北','関東','中部','関西','中国','四国','九州','その他'];
+
+function jpRegionOf(raw){
+    if(!raw)return null;
+    const s=String(raw).replace(/\s+/g,'');
+    // Translate 横滨→横浜 (common typo)
+    const norm=s.replace('横滨','横浜').replace('东京','東京');
+    for(const[reg,prefs]of Object.entries(JP_REGIONS)){
+        for(const p of prefs){if(norm.includes(p))return reg}
+    }
+    return 'その他';
+}
+function prefOf(raw){
+    if(!raw)return null;
+    const s=String(raw).replace(/\s+/g,'').replace('横滨','横浜').replace('东京','東京');
+    for(const prefs of Object.values(JP_REGIONS)){
+        for(const p of prefs){if(s.includes(p))return p}
+    }
+    return null;
+}
+
+// Industry classification (heuristic by endUser name keywords)
+const IND_RULES=[
+    {k:'自動車',pat:/トヨタ|Toyota|ホンダ|Honda|本田|日産|Nissan|アイシン|Aisin|デンソー|Denso|マツダ|Mazda|スズキ|Suzuki|ダイハツ|Daihatsu|スバル|Subaru|三菱自動車|ヤマハ発動機|ヤマハモーター|川崎重工|カワサキ|車体|自動車|アルプス|シマノ|タイヤ|ブリヂストン|Bridgestone|ジヤトコ|JATCO|アスモ|Asmo|フタバ|タチエス|自動|車輌|車両|トランスミッション/i},
+    {k:'電子/半導体',pat:/半導体|電子|電機|電気|Sony|ソニー|村田|Murata|TDK|京セラ|Kyocera|シャープ|Sharp|パナソニック|Panasonic|NEC|富士通|Fujitsu|東芝|Toshiba|日立|Hitachi|キヤノン|Canon|ニコン|Nikon|オムロン|Omron|Renesas|ルネサス|アルプス|ローム|Rohm|セイコー|エプソン|Epson|ミネベア|アンリツ|横河|YOKOGAWA|JVC|YAGEO|信越|SUMCO|ディスコ|Disco|アドバンテスト|半導|エレクトロニクス/i},
+    {k:'食品/医薬',pat:/食品|医薬|製薬|薬|ハム|ビール|乳業|食肉|食品|武田|Takeda|Pharma|アステラス|Astellas|大塚|キリン|Kirin|サントリー|Suntory|アサヒ|Asahi|JT|味の素|明治|Meiji|森永|Morinaga|ヤクルト|ニッスイ|日水|ロッテ|Lotte|江崎グリコ|Glico|カルビー|Calbee|日清|Nissin|不二家|医薬品|健栄|興和|エーザイ|Eisai/i},
+    {k:'EC/物流',pat:/物流|EC|Amazon|アマゾン|ヤマト|佐川|倉庫|配送|Logi|運輸|ニトリ|ユニクロ|ZOZO|楽天|Rakuten|配達|宅配|流通|センター|DC|Distribution|MonotaRO|アスクル|ASKUL|ロジ/i},
+    {k:'一般製造',pat:/工業|製作所|製造|機械|機構|金属|鋼|プラスチック|プレス|工場|ものづくり|Manufacturing|Industries|Industrial|Works|MFG|Heavy|重工|工機|精機|テクノ|TECH|Tech|軸受|ベアリング|モーター|Motor|樹脂|塗装|加工|鋳造|鍛造/i}
+];
+function industryOf(d){
+    const nm=(d.endUser||'')+' '+(d.projectName||'');
+    for(const r of IND_RULES){if(r.pat.test(nm))return r.k}
+    return 'その他';
+}
+const IND_ORDER=['自動車','電子/半導体','食品/医薬','一般製造','EC/物流','その他'];
+const IND_COLOR={'自動車':'#4472C4','電子/半導体':'#ED7D31','食品/医薬':'#FFC000','一般製造':'#70AD47','EC/物流':'#2DD4BF','その他':'#9CA3AF'};
+
+function regionBarsPanel(title,sub,data){
+    // data: array of items
+    const byPref=grp(data,d=>prefOf(d.region));
+    const byReg={};JP_REGION_ORDER.forEach(r=>byReg[r]=0);
+    data.forEach(d=>{const r=jpRegionOf(d.region);if(r)byReg[r]++});
+    const total=data.length;
+    const mx=Math.max(...Object.values(byReg),1);
+    // Top prefectures
+    const topPrefs=Object.entries(byPref).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const prefMax=topPrefs.length?topPrefs[0][1]:1;
+    return`
+    <div class="panel"><div class="panel-h"><span class="panel-t">${title}</span><span class="panel-badge">${total} 件</span></div><div class="panel-b">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">${sub} · 地域別</div>
+        <div class="hbar">${JP_REGION_ORDER.filter(r=>byReg[r]>0).map(r=>`<div class="hbar-r"><div class="hbar-l">${r}</div><div class="hbar-t"><div class="hbar-f" style="width:${pct(byReg[r],mx)}%;background:${JP_REGION_COLOR[r]}"><span>${byReg[r]}</span></div></div><div class="hbar-e">${pct(byReg[r],total)}%</div></div>`).join('')}</div>
+        ${topPrefs.length?`<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--glass-border)"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">TOP 10 都道府県</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${topPrefs.map(([k,v],i)=>`<div style="background:var(--glass2);border:1px solid var(--glass-border);padding:4px 10px;border-radius:8px;font-size:11px"><span style="color:var(--text2)">${esc(k)}</span> <span style="font-weight:700;color:${C[i%C.length]}">${v}</span></div>`).join('')}</div></div>`:''}
+    </div></div>`;
+}
+
+function vDistribution(){
+    const T=DATA.length;
+    const won=DATA.filter(isWon);
+
+    // Industry pie
+    const indCnt={};IND_ORDER.forEach(k=>indCnt[k]=0);
+    DATA.forEach(d=>{indCnt[industryOf(d)]++});
+    const indEntries=IND_ORDER.filter(k=>indCnt[k]>0).map(k=>[k,indCnt[k]]);
+
+    // Industry × Scenario matrix
+    const sList=[...new Set(DATA.map(d=>d.scenario).filter(Boolean))].sort();
+    const indScn={};IND_ORDER.forEach(k=>{indScn[k]={};sList.forEach(s=>indScn[k][s]=0)});
+    DATA.forEach(d=>{const k=industryOf(d);if(d.scenario)indScn[k][d.scenario]=(indScn[k][d.scenario]||0)+1});
+    const indTotals=IND_ORDER.map(k=>[k,Object.values(indScn[k]).reduce((a,b)=>a+b,0)]);
+    const stMax=Math.max(...indTotals.map(([,v])=>v),1);
+
+    return`
+    <div class="kpi-row c4">
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">総案件数</span></div><div class="kpi-val">${T}</div><div class="kpi-sub">全エリア合計</div></div>
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">成約案件数</span></div><div class="kpi-val" style="color:var(--green)">${won.length}</div><div class="kpi-sub">受注+移管 (${pct(won.length,T)}%)</div></div>
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">カバー都道府県</span></div><div class="kpi-val" style="color:var(--blue)">${new Set(DATA.map(d=>prefOf(d.region)).filter(Boolean)).size}</div><div class="kpi-sub">47 都道府県中</div></div>
+        <div class="kpi"><div class="kpi-top"><span class="kpi-label">業界分布</span></div><div class="kpi-val" style="color:var(--accent)">${indEntries.length}</div><div class="kpi-sub">業種カテゴリ</div></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:12px">
+        ${regionBarsPanel('① 日本収録案件 地域分布','全案件',DATA)}
+        ${regionBarsPanel('② 日本成約案件 地域分布','受注 + 移管',won)}
+    </div>
+
+    <div class="grid g2" style="margin-top:12px">
+        <div class="panel"><div class="panel-h"><span class="panel-t">③ 案件数 業界占比</span><span class="panel-badge">${T} 件</span></div><div class="panel-b">
+            ${mkDonut(indEntries,180,IND_COLOR)}
+        </div></div>
+        <div class="panel"><div class="panel-h"><span class="panel-t">④ 業界 × シナリオ 積み上げ</span><span class="panel-badge">${sList.length} シナリオ</span></div><div class="panel-b">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:10.5px">
+                ${sList.map(s=>`<div style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${SC_C[s]||'#999'}"></span><span>${esc(s)}</span></div>`).join('')}
+            </div>
+            ${IND_ORDER.map(ind=>{
+                const tot=Object.values(indScn[ind]).reduce((a,b)=>a+b,0);
+                if(!tot)return'';
+                const w=pct(tot,stMax);
+                return`<div style="margin-bottom:10px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px"><span style="font-weight:600">${ind}</span><span style="color:var(--text3)">${tot} 件 · ${pct(tot,T)}%</span></div>
+                    <div style="display:flex;height:24px;width:${Math.max(w,3)}%;min-width:60px;border-radius:5px;overflow:hidden;background:var(--glass2)">
+                        ${sList.map(s=>{const v=indScn[ind][s];if(!v)return'';return`<div style="background:${SC_C[s]||'#999'};width:${pct(v,tot)}%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700" title="${s}: ${v}">${v>=Math.max(tot*0.08,2)?v:''}</div>`}).join('')}
+                    </div>
+                </div>`;
+            }).join('')}
+        </div></div>
+    </div>`;
+}

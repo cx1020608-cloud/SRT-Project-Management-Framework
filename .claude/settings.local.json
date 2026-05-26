@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/standard/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/224859e5-e9a8-468a-946e-0f6e105ba09c/a8eda461-0e94-4ec2-9879-b60491eca125/skills/xlsx/**)",
+      "Bash(python -c \":*)",
+      "Bash(where python:*)",
+      "Bash(python3 -c \"import pandas; print\\(''ok''\\)\")",
+      "Bash(pip install:*)",
+      "Bash(python3 -m pip install pandas openpyxl)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3 -c \"print\\(''hello''\\)\")",
+      "Bash(where python3:*)",
+      "Bash(ls /c/Python*)",
+      "Read(//c/Users/standard/AppData/Local/Programs/Python//**)",
+      "Bash(npx --version)",
+      "Bash(where node:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(\"/c/Users/standard/AppData/Local/Programs/Python/Python312/python.exe\" --version)",
+      "Bash(node -c marketing.js)",
+      "Bash(\"/c/Users/standard/AppData/Local/Programs/Python/Python312/python.exe\" -c \":*)",
+      "WebSearch",
+      "Bash(where git:*)",
+      "Bash(where gh:*)",
+      "Bash(git config:*)"
+    ]
+  }
+}
